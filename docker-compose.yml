@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  setup:
+    container_name: setup
+    build:
+      context: .
+      dockerfile: setup/Dockerfile
+    volumes:
+      - ./setup:/setup
+    environment:
+      PSQL_USERNAME: ${PSQL_USERNAME}
+      PSQL_HOSTNAME: ${PSQL_HOSTNAME}
+      PSQL_PASSWORD: ${PSQL_PASSWORD}
+      PSQL_DATABASE: ${PSQL_DATABASE}
+      PSQL_SCHEMA: ${PSQL_SCHEMA}
+    ports:
+     - "5000:5000"
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: "postgres"
+    image: "postgres:13-alpine"
+    restart: unless-stopped
+    command: ["postgres", "-c", "log_statement=all"]
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql/initdb/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./src/shared/generated_fixture.sql:/docker-entrypoint-initdb.d/2-generated_fixture.sql
+    environment:
+      POSTGRES_USER: ${PSQL_USERNAME}
+      PSQL_HOSTNAME: ${PSQL_HOSTNAME}
+      POSTGRES_PASSWORD: ${PSQL_PASSWORD}
+      PSQL_DATABASE: ${PSQL_DATABASE}
+      SCHEMA: ${PSQL_SCHEMA}
+
+# networks:
+#   proxynet:
+#     name: custom_network
