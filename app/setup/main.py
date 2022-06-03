@@ -1,32 +1,26 @@
-import os
-from fastapi import Depends, FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import os, json
+from abc import ABC, abstractmethod
 
-from .backend.routers import setup, technicians, summary, studies, assessment
-from .events import create_start_app_handler, create_stop_app_handler
+@abstractmethod
+class DataPreparation(ABC):
+    def _load_img_bbox(self, img_path: str, img_dir, annotations_dir: str):
+        pass
 
-def create_app():
 
-    app = FastAPI()
+class JsonDataPreparation(DataPreparation):
+    def _load_img_bbox(self, img_path: str, img_dir, annotations_dir: str):
+        # Get relative image path
+        rel_img_path = os.path.relpath(img_path, img_dir)
 
-    origins= [os.getenv("FRONTEND_BASE_URL")]
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+        # Compute the path to the annotations directory
+        annotations_img_path = os.path.abspath(os.path.join(annotations_dir, rel_img_path))
+        annotations_img_path = os.path.splitext(annotations_img_path)[0] + ".json"
 
-    app.include_router(setup.router)
-    app.include_router(technicians.router)
-    app.include_router(summary.router)
-    app.include_router(studies.router)
-    app.include_router(assessment.router)
+        # Load the annotations data
+        with open(annotations_img_path, "r") as annotations_file:
+            img_data = json.load(annotations_file)
 
-    app.add_event_handler("startup", create_start_app_handler(app))
-    app.add_event_handler("shutdown", create_stop_app_handler(app))
+        # Retrieve the bounding box data
+        bbox_data = img_data['bbox']
 
-    return app
-
-app = create_app()
+        return bbox_data

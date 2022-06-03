@@ -21,13 +21,12 @@ services:
   postgres:
     container_name: "postgres"
     image: "postgres:13-alpine"
-    restart: unless-stopped
+    restart: "no"
     command: ["postgres", "-c", "log_statement=all"]
     ports:
       - "5432:5432"
     volumes:
-      - ./sql/initdb/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
-      - ./src/shared/generated_fixture.sql:/docker-entrypoint-initdb.d/2-generated_fixture.sql
+      - ./app/sql/tenyks_schema.sql:/docker-entrypoint-initdb.d/tenyks_schema.sql
     environment:
       POSTGRES_USER: ${PSQL_USERNAME}
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}
