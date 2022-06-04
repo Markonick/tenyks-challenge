@@ -24,7 +24,7 @@ async def get_dataset_by_id(dataset_id: Dataset.Key, datasets_repo: DatasetsRepo
 async def get_dataset_by_name(name: str, datasets_repo: DatasetsRepository=Depends(get_repository(DatasetsRepository))) -> Dataset:
     """"Get a dataset based on dataset name."""
 
-    dataset = await datasets_repo.get_sites_by_organisation_id(name)
+    dataset = await datasets_repo.get_dataset_by_name(name)
     
     return dataset
 

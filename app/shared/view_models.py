@@ -15,7 +15,7 @@ class Dataset:
 @dataclass
 class Model:
     """Information about each model as a whole"""
-
+    Key = int
     model_id: int
     name: str
     datasets: List[Dataset]

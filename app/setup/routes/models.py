@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from typing import List
 
-from ...shared.view_models import Image
+from ...shared.view_models import Model
 from ..repos.images_repo import ModelsRepository
 from ...shared.database import get_repository
 
@@ -12,21 +12,25 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@router.get("/{dataset_id}", response_model=Image, status_code=200, )
-async def get_dataset_by_id(dataset_id: Image.Key, images_repo: ImagesRepository=Depends(get_repository(ImagesRepository))) -> Image:
-    """Get a dataset based on a known dataset id."""
+@router.get("/{model_id}", response_model=Model, status_code=200, )
+async def get_model_by_id(model_id: Model.Key, models_repo: ModelsRepository=Depends(get_repository(ModelsRepository))) -> Model:
+    """Get a mode based on a known id."""
 
-    dataset = await images_repo.get_image_by_id(dataset_id)
+    model = await models_repo.get_model_by_id(model_id)
     
-    return dataset
+    return model
 
-@router.post("/", response_model=Image, status_code=201, )
-async def post_image(image: Image, images_repo: ImagesRepository=Depends(get_repository(ImagesRepository))) -> Image:
+@router.get("/{name}", response_model=Model, status_code=200, )
+async def get_model_by_name(name: str, models_repo: ModelsRepository=Depends(get_repository(ModelsRepository))) -> Model:
+    """"Get a model based on model name."""
+
+    model = await models_repo.get_model_by_name(name)
+    
+    return model
+
+@router.post("/", response_model=Model, status_code=201, )
+async def post_model(name: str, models_repo: ModelsRepository=Depends(get_repository(ModelsRepository))) -> Model:
     """"Get a dataset based on dataset name."""
-    dataset_type = dataset.type
-    dataset_name = dataset.name
-    dataset_size = dataset.size
-    dataset_url = dataset.url
-    dataset = await images_repo.create_image(dataset_type, dataset_name, dataset_size, dataset_url)
+    model = await models_repo.create_model(name)
     
-    return dataset
+    return model

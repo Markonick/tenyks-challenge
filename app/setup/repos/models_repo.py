@@ -41,32 +41,30 @@ class ModelsRepository(BaseRepository):
             dataset = await typed_fetch(self.connection, DatasetDto, query_string, modelid)
             return dataset
 
-    async def create_model(self, dataset_type: str, dataset_name: str, dataset_url: str, dataset_size: int, ) -> None:
-        """Create a new dataset"""
+    async def create_model(self, name: str) -> None:
+        """Create a new model"""
 
         async with self.connection.transaction():
-            get_dataset_type_id_string = f"""
+            get_model_query_string = f"""
                 SELECT 
-                    dataset_type_id 
-                FROM tenyks.dataset ds
-                JOIN tenyks.dataset_type dst ON ds.dataset_type_id = dst.id
+                    mo.id,
+                    mo.name 
+                FROM tenyks.model mo
                 WHERE name=$1;
             """
             
             dataset_type_id = await self.connection.raw_fetch(
-                get_dataset_type_id_string,
-                dataset_type,
+                get_model_query_string,
+                name,
             )
 
-            dataset_insert_query_string = f"""
-                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_url, dataset_size)
-                VALUES ($1, $2, $3, $4)
+            model_insert_query_string = f"""
+                INSERT INTO tenyks.model(name)
+                VALUES ($1)
                 RETURNING id;
             """
                 
             result = await self.connection.raw_fetch(
-                dataset_insert_query_string,
-                dataset_type_id,
-                dataset_name,
-                dataset_url,
+                model_insert_query_string,
+                name,
             )
