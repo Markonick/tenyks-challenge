@@ -30,7 +30,8 @@ async def get_model_by_name(name: str, models_repo: ModelsRepository=Depends(get
 
 @router.post("/", response_model=Model, status_code=201, )
 async def post_model(name: str, models_repo: ModelsRepository=Depends(get_repository(ModelsRepository))) -> Model:
-    """"Get a dataset based on dataset name."""
+    """"Post a model."""
+    
     model = await models_repo.create_model(name)
     
     return model

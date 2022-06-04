@@ -1,6 +1,7 @@
 asyncpg==0.24.0
 pytest
 pytest-asyncio
+pydantic
 httpx
 numpy
 fastapi[all]==0.70.1

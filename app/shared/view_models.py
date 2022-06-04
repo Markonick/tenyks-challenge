@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from dataclasses import dataclass
 import numpy as np
 
@@ -57,7 +57,7 @@ class Image:
     
     name: str
     annotations: Annotations
-    model_annotations: Annotations
-    model_heatmap: Heatmap
-    model_activations: Activations
+    model_annotations: Optional[Annotations] = None
+    model_heatmap: Optional[Heatmap] = None
+    model_activations: Optional[Activations] = None
 
