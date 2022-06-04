@@ -1,7 +1,9 @@
 asyncpg==0.24.0
+aiofiles
 pytest
 pytest-asyncio
 pydantic
 httpx
 numpy
 fastapi[all]==0.70.1
+Pillow

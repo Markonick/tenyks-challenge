@@ -1,7 +1,13 @@
+import asyncio
+from dataclasses import dataclass
+import glob
 import os, json
 from abc import ABC, abstractmethod
+import time
+import aiofiles
 
 from app.shared.view_models import Dataset, Image, Model
+from model_data import DummyModel
 
 """
 A client should be able to use the Tenyks SDK in order to perform the following actions:
@@ -70,16 +76,56 @@ class TenyksSDK():
     def extract(self):
         self._extractor.save()
 
+# def ml_extraction()
 def load_json(file_path: str) -> dict:
+
     with open(file_path,'r') as file:
-        return json.load(file)
+        result = json.load(file)
 
+    return result
+
+async def load_json_async(file_path: str) -> dict:
+
+    async with aiofiles.open(file_path, mode='r') as f:
+        contents = await f.read()
+
+    return contents
+
+async def load_many_json_async(files_list):
+     return await asyncio.gather(
+            *(load_json_async(file) for file in files_list)
+        )
+
+# @dataclass
+# class 
 if __name__ == "__main__":
-    json_extractor: BaseExtractor = JsonExtractor(input)
-    tenyks_sdk = TenyksSDK(json_extractor)
-
-    tenyks_sdk.extract(json_extractor)
-
-    image_path = "../dataset_data/human_dataset/annotations/11.json"
-    result = load_json(image_path)
-    print(result)
+    # json_extractor: BaseExtractor = JsonExtractor(input)
+    # tenyks_sdk = TenyksSDK(json_extractor)
+    
+    loop = asyncio.get_event_loop()
+    # tenyks_sdk.extract(json_extractor)
+    # annotations_path = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/human_dataset/annotations/"
+    annotations_path = "/Users/nicolas/Projects/tenyks-challenge/annotations/"
+    images_path = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/human_dataset/images/"
+    list_of_annotations_file_paths = glob.glob(f"{annotations_path}*.json")
+    list_of_images_file_paths = glob.glob(f"{images_path}*.jpg")
+    # print(list_of_annotations_file_paths)
+    print(f"start blocking_io at {time.strftime('%X')}")
+    result = [load_json(file) for file in list_of_annotations_file_paths]
+    print(f"finish blocking_io at {time.strftime('%X')}")
+    # result2 = 
+    # print(result)
+    # print(result2)
+    print(glob.glob("*.jpg"))
+    print(f"start async read at {time.strftime('%X')}")
+    loop.run_until_complete(load_many_json_async(list_of_annotations_file_paths))
+    print(f"finish async read at {time.strftime('%X')}")
+    loop.close()
+    model_id = 0
+    model = DummyModel(model_id)
+    heatmap = model.get_img_heatmap(img_path=list_of_images_file_paths[0])
+    bbox_and_categories = model.get_model_prediction(img_path=list_of_images_file_paths[0])
+    activations = model.get_img_activations(img_path=list_of_images_file_paths[0])
+    print(heatmap)
+    print(bbox_and_categories)
+    print(activations)
