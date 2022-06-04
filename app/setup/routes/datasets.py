@@ -28,7 +28,7 @@ async def get_dataset_by_name(name: str, datasets_repo: DatasetsRepository=Depen
     
     return dataset
 
-@router.post("/{name}", response_model=Dataset, status_code=201, )
+@router.post("/", response_model=Dataset, status_code=201, )
 async def post_dataset(dataset: Dataset, datasets_repo: DatasetsRepository=Depends(get_repository(DatasetsRepository))) -> Dataset:
     """"Get a dataset based on dataset name."""
     dataset_type = dataset.type

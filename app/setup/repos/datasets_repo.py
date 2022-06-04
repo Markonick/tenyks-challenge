@@ -8,7 +8,7 @@ from ...shared.database import BaseRepository
 
 
 class DatasetsRepository(BaseRepository):
-    """Sites repository used to fetch sites"""
+    """Datasets repository used to fetch or post datasets"""
 
     def __init__(self, conn: Connection) -> None:
         super().__init__(conn)
