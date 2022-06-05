@@ -6,7 +6,16 @@ from abc import ABC, abstractmethod
 import time
 import aiofiles
 
-from app.shared.view_models import Dataset, Image, Model
+from app.shared.view_models import (
+    Activations, 
+    Annotations, 
+    BoundingBox, 
+    Category, 
+    Dataset, 
+    Image, 
+    Model, 
+    Heatmap
+)
 from model_data import DummyModel
 
 """
@@ -104,28 +113,53 @@ if __name__ == "__main__":
     
     loop = asyncio.get_event_loop()
     # tenyks_sdk.extract(json_extractor)
+    
+    # Set inputs (UI Service) ##################################################################
+    ############################################################################################
     # annotations_path = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/human_dataset/annotations/"
-    annotations_path = "/Users/nicolas/Projects/tenyks-challenge/annotations/"
-    images_path = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/human_dataset/images/"
+    annotations_path = "/home/markonick/Projects/tenyks-challenge/annotations/"
+    images_path = "/home/markonick/Projects/tenyks-challenge/dataset_data/human_dataset/images/"
     list_of_annotations_file_paths = glob.glob(f"{annotations_path}*.json")
     list_of_images_file_paths = glob.glob(f"{images_path}*.jpg")
-    # print(list_of_annotations_file_paths)
+
+    # Read Json annotations files (UI Service) - IO BOUND, use async ###########################
+    ############################################################################################
     print(f"start blocking_io at {time.strftime('%X')}")
     result = [load_json(file) for file in list_of_annotations_file_paths]
     print(f"finish blocking_io at {time.strftime('%X')}")
-    # result2 = 
-    # print(result)
-    # print(result2)
-    print(glob.glob("*.jpg"))
+
+    # Async Read Json annotations files (UI Service) - IO BOUND, use async #####################
+    ############################################################################################
     print(f"start async read at {time.strftime('%X')}")
     loop.run_until_complete(load_many_json_async(list_of_annotations_file_paths))
     print(f"finish async read at {time.strftime('%X')}")
     loop.close()
+
+    # First prepare data #######################################################################
+    ############################################################################################
+
+
+    # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
+    ############################################################################################
     model_id = 0
     model = DummyModel(model_id)
+    
     heatmap = model.get_img_heatmap(img_path=list_of_images_file_paths[0])
     bbox_and_categories = model.get_model_prediction(img_path=list_of_images_file_paths[0])
     activations = model.get_img_activations(img_path=list_of_images_file_paths[0])
+
+    # Arrange ML outputs into internal API format
+    heatmap_vm = Heatmap(array=heatmap)
+    annotations_vm = Annotations(
+        bbox=BoundingBox(array=[bbox for bbox in bbox_and_categories['bbox']]), 
+        category=Category(category_id=[cat for cat in bbox_and_categories['category_id']]), 
+    )
+    activations_vm = Activations(array=[activation.tolist() for activation in activations])
+
+    # Save ML outputs internal API format into DB (BACKEND Service) - IO BOUND, use async ######
+    ############################################################################################
+    
     print(heatmap)
     print(bbox_and_categories)
     print(activations)
+    print(activations_vm.array)
