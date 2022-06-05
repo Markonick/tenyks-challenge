@@ -5,6 +5,7 @@ import os, json
 from abc import ABC, abstractmethod
 import time
 import aiofiles
+import requests
 
 from app.shared.view_models import (
     Activations, 
@@ -117,31 +118,49 @@ if __name__ == "__main__":
     # Set inputs (UI Service) ##################################################################
     ############################################################################################
     # annotations_path = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/human_dataset/annotations/"
-    annotations_path = "/home/markonick/Projects/tenyks-challenge/annotations/"
-    images_path = "/home/markonick/Projects/tenyks-challenge/dataset_data/human_dataset/images/"
-    list_of_annotations_file_paths = glob.glob(f"{annotations_path}*.json")
+    dataset_path_human = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/human_dataset"
+    dataset_path_terminator = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/terminator_dataset"
+    annotations_path_human = f"{dataset_path_human}/annotations/"
+    annotations_path_terminator = f"{dataset_path_terminator}/annotations/"
+    images_path_human = f"{dataset_path_human}/images/"
+    images_path_terminator = f"{dataset_path_terminator}/images/"
+    list_of_annotations_file_paths_human = glob.glob(f"{annotations_path_human}*.json")
+    list_of_annotations_file_paths_terminator = glob.glob(f"{images_path_terminator}*.json")
     list_of_images_file_paths = glob.glob(f"{images_path}*.jpg")
 
     # Read Json annotations files (UI Service) - IO BOUND, use async ###########################
     ############################################################################################
     print(f"start blocking_io at {time.strftime('%X')}")
-    result = [load_json(file) for file in list_of_annotations_file_paths]
+    result = [load_json(file) for file in list_of_annotations_file_paths_human]
     print(f"finish blocking_io at {time.strftime('%X')}")
 
     # Async Read Json annotations files (UI Service) - IO BOUND, use async #####################
     ############################################################################################
     print(f"start async read at {time.strftime('%X')}")
-    loop.run_until_complete(load_many_json_async(list_of_annotations_file_paths))
+    loop.run_until_complete(load_many_json_async(list_of_annotations_file_paths_human))
     print(f"finish async read at {time.strftime('%X')}")
     loop.close()
 
     # First prepare data #######################################################################
     ############################################################################################
-
-
+    size_human = len(list_of_annotations_file_paths_human)
+    size_terminator = len(list_of_annotations_file_paths_human)
+    model_id = 0
+    dataset_name_human = "human_dataset"
+    dataset_name_terminator = "terminator_dataset"
+    model_name = "Terminator Model"
+    dataset_human_vm = Dataset(name=dataset_name_human, size=size_human, type='jpg', url=dataset_path_human)
+    dataset_terminator_vm = Dataset(name=dataset_name_terminator, size=size_terminator, type='jpg', url=images_path_terminator)
+    model_vm = Model(model_id=model_id, name=model_name, datasets=[dataset_human_vm, dataset_terminator_vm])
+    
+    # Persist dataset data into DB (BACKEND Service) - IO BOUND, use async #####################
+    ############################################################################################
+    backend_url = "http://localhost:5000"
+    requests.post(backend_url, data={'key':'value'})
+    
     # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
     ############################################################################################
-    model_id = 0
+    
     model = DummyModel(model_id)
     
     heatmap = model.get_img_heatmap(img_path=list_of_images_file_paths[0])

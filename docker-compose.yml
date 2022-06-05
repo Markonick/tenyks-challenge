@@ -1,22 +1,22 @@
 version: "3.9"
 services:
-  # setup:
-  #   container_name: setup
-  #   build:
-  #     context: .
-  #     dockerfile: setup/Dockerfile
-  #   volumes:
-  #     - ./setup:/setup
-  #   environment:
-  #     PSQL_USERNAME: ${PSQL_USERNAME}
-  #     PSQL_HOSTNAME: ${PSQL_HOSTNAME}
-  #     PSQL_PASSWORD: ${PSQL_PASSWORD}
-  #     PSQL_DATABASE: ${PSQL_DATABASE}
-  #     PSQL_SCHEMA: ${PSQL_SCHEMA}
-  #   ports:
-  #    - "5000:5000"
-  #   depends_on:
-  #     - postgres
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: app/backend/Dockerfile
+    volumes:
+      - ./backend:/backend
+    environment:
+      PSQL_USERNAME: ${PSQL_USERNAME}
+      PSQL_HOSTNAME: ${PSQL_HOSTNAME}
+      PSQL_PASSWORD: ${PSQL_PASSWORD}
+      PSQL_DATABASE: ${PSQL_DATABASE}
+      PSQL_SCHEMA: ${PSQL_SCHEMA}
+    ports:
+     - "5000:5000"
+    depends_on:
+      - postgres
 
   postgres:
     container_name: "postgres"

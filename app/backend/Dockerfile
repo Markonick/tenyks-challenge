@@ -2,8 +2,8 @@ FROM python:3.9-slim
 
 EXPOSE 5000
 
-WORKDIR /setup
-COPY /setup /setup
+WORKDIR /backend
+COPY . /backend
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt --no-cache-dir
