@@ -48,7 +48,6 @@ class DatasetsRepository(BaseRepository):
             """
 
             result = await typed_fetch(self.connection, DatasetDto, query_string, dataset_id)
-            print(result)
             return [] if len(result) == 0 else result[0]
 
     async def create_dataset(self, dataset_type: str, dataset_name: str, dataset_size: int, dataset_url: str,  ) -> None:
@@ -61,13 +60,11 @@ class DatasetsRepository(BaseRepository):
                 FROM tenyks.dataset_type dst
                 WHERE dst.name=$1;
             """
-            print(dataset_type)
+            
             dataset_type_id = await self.connection.fetchval(
                 get_dataset_type_id_string,
                 dataset_type,
             )
-
-            print(dataset_type_id)
 
             dataset_insert_query_string = f"""
                 INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_size, dataset_url)

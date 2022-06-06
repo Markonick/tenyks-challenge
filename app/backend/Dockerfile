@@ -10,5 +10,4 @@ COPY app/__init__.py /app
 #     pip3 install -r shared/requirements.txt
 
 RUN  pip3 install -r shared/requirements.txt
-
 CMD ["uvicorn", "backend.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]

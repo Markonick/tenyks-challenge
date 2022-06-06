@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
 from shared.exception_handlers import TenyksException, TenyksRequestValidationError
-from .routers import datasets, models, images
+from .routers import extract
 
 from shared.utils_fastapi import create_start_app_handler, create_stop_app_handler
 
@@ -37,9 +37,7 @@ def create_app():
             content={"message": f"Request cannot be procesed. Please check your client call...{exc}"},
         )
 
-    app.include_router(datasets.router)
-    app.include_router(models.router)
-    app.include_router(images.router)
+    app.include_router(extract.router)
 
     app.add_event_handler("startup", create_start_app_handler(app))
     app.add_event_handler("shutdown", create_stop_app_handler(app))

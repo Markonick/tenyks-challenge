@@ -1,7 +1,7 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 from pydantic import BaseModel, Field
 from pydantic.dataclasses import dataclass
-from dataclasses import dataclass as non_pyd_dataclass
+from dataclasses import dataclass as non_pydantic_dataclass
 from dataclasses import field
 import numpy as np
 
@@ -45,31 +45,29 @@ class Annotations:
     bboxes: List[BoundingBox]
     categories: List[Category]
 
-@non_pyd_dataclass
+@dataclass
 class Heatmap:
     """Representation of a Heatmap"""
 
-    array: np.ndarray = field(default_factory=lambda: np.zeros(10))
+    # array: np.ndarray = field(default_factory=lambda: np.zeros(10))
+    array: Any
 
-@non_pyd_dataclass
+@dataclass
 class Activations:
     """Representation of a Layer Activations"""
 
-    array: List[np.ndarray] = field(default_factory=lambda: np.zeros(10))
+    # array: List[np.ndarray] = field(default_factory=lambda: List[np.zeros(10)])
+    array: List[Any]
 
-# class Activations(BaseModel):
-#     array: np.ndarray = Field(default_factory=lambda: np.zeros(10))
-
-#     class Config:
-#         arbitrary_types_allowed = True
-
-@non_pyd_dataclass
+@dataclass
 class Image:
     """Information about each image"""
     
     name: str
+    url: str
+    dataset_name: str
     annotations: Annotations
-    model_annotations: Optional[Annotations] = Field(default_factory=lambda: np.zeros(10))
+    model_annotations: Optional[Annotations] = None
+    model_activations: Optional[Activations] = None
     model_heatmap: Optional[Heatmap] = None
-    model_activations: Optional[Activations] = Field(default_factory=lambda: np.zeros(10))
 

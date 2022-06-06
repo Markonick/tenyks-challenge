@@ -1,5 +1,6 @@
 version: "3.9"
 services:
+
   ui:
     container_name: ui
     build:
@@ -7,6 +8,7 @@ services:
       dockerfile: app/ui/Dockerfile
     volumes:
       - ./app/ui:/app/ui
+      - ./app/shared:/app/shared
       - ./dataset_data:/app/ui/dataset_data
     environment:
       PSQL_USERNAME: ${PSQL_USERNAME}
@@ -28,6 +30,7 @@ services:
       dockerfile: app/backend/Dockerfile
     volumes:
       - ./app/backend:/app/backend
+      - ./app/shared:/app/shared
     environment:
       PSQL_USERNAME: ${PSQL_USERNAME}
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}
@@ -62,7 +65,3 @@ services:
       POSTGRES_PASSWORD: ${PSQL_PASSWORD}
       PSQL_DATABASE: ${PSQL_DATABASE}
       SCHEMA: ${PSQL_SCHEMA}
-
-# networks:
-#   proxynet:
-#     name: custom_network

@@ -43,7 +43,7 @@ class ModelsRepository(BaseRepository):
 
     async def create_model(self, name: str, datasets: List[str]) -> None:
         """Create a new model"""
-
+      
         async with self.connection.transaction():
             model_insert_query_string = f"""
                 INSERT INTO tenyks.model(name)
@@ -51,27 +51,27 @@ class ModelsRepository(BaseRepository):
                 RETURNING id;
             """
                 
-            model_id = await self.connection.fetchrow(
+            model_id = await self.connection.fetchval(
                 model_insert_query_string,
                 name,
             )
-            print(model_id[0])
+
+            print("model_id[0]: ", model_id)
+
             get_dataset_id_query_string = f"""
                 SELECT 
                     ds.id 
                 FROM tenyks.dataset ds
                 WHERE ds.dataset_name=$1;
             """
-
             dataset_ids = [
                 await self.connection.fetchval(
                     get_dataset_id_query_string,
-                    dataset_name,
+                    dataset,
                 ) 
-                for dataset_name in datasets
+                for dataset in datasets
             ]
 
-            print(dataset_ids)
             model_dataset_insert_query_string = f"""
                 INSERT INTO tenyks.model_dataset(model_id, dataset_id)
                 VALUES ($1, $2);
@@ -80,7 +80,7 @@ class ModelsRepository(BaseRepository):
             result = [
                 await self.connection.fetch(
                     model_dataset_insert_query_string,
-                    model_id[0], dataset_id,
+                    model_id, dataset_id,
                 )
                 for dataset_id in dataset_ids
             ]
