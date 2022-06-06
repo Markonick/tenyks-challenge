@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import time
 import aiofiles
 import requests
+from typing import Generator, List
 
 from shared.view_models import (
     Activations, 
@@ -101,13 +102,10 @@ async def load_json_async(file_path: str) -> dict:
 
     return contents
 
-async def load_many_json_async(files_list):
-     return await asyncio.gather(
-            *(load_json_async(file) for file in files_list)
-        )
+async def load_many_json_async(file_path_generator: Generator) -> List[dict]:
+    for path in file_path_generator:
+        yield await load_json_async(path)
 
-# @dataclass
-# class 
 if __name__ == "__main__":
     # json_extractor: BaseExtractor = JsonExtractor(input)
     # tenyks_sdk = TenyksSDK(json_extractor)
@@ -130,6 +128,12 @@ if __name__ == "__main__":
     list_of_images_file_paths_terminator = glob.glob(f"{images_path_terminator}*.jpg")
 
     list_of_images_file_paths_terminator =os.scandir(images_path_terminator)
+    print(type(os.walk(images_path_terminator)))
+    print(type(os.walk(images_path_terminator)))
+    print(type(os.walk(images_path_terminator)))
+    print(type(os.walk(images_path_terminator)))
+    print(type(os.walk(images_path_terminator)))
+    print(type(os.walk(images_path_terminator)))
 
     # Read Json annotations files (UI Service) - IO BOUND, use async ###########################
     ############################################################################################
@@ -139,10 +143,10 @@ if __name__ == "__main__":
 
     # Async Read Json annotations files (UI Service) - IO BOUND, use async #####################
     ############################################################################################
-    print(f"start async read at {time.strftime('%X')}")
-    loop.run_until_complete(load_many_json_async(list_of_annotations_file_paths_human))
-    print(f"finish async read at {time.strftime('%X')}")
-    loop.close()
+    # print(f"start async read at {time.strftime('%X')}")
+    # loop.run_until_complete(load_many_json_async(list_of_annotations_file_paths_human))os.walk(images_path_terminator)
+    # print(f"finish async read at {time.strftime('%X')}")
+    # loop.close()
 
     # First prepare data #######################################################################
     ############################################################################################
@@ -166,21 +170,29 @@ if __name__ == "__main__":
         "size": 12,
         "url": "here/is/the/path4"
     }
+
+    files_generator = os.walk(images_path_terminator)
+    # loop.run_until_complete(load_many_json_async(path_generator))
     with requests.Session() as session:
-        session.post(backend_url, headers=headers, json=data)
+        for dirpath, dirname, filename in files_generator:
+            print(dirpath)
+            print(dirname)
+            print(filename)
+            data = loop.run_until_complete(load_json_async(dirpath))
+
+            session.post(backend_url, headers=headers, json=data)
     
     # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
     ############################################################################################
     
     model = DummyModel(model_id)
-    print(list_of_images_file_paths_human)
+    # print(list_of_images_file_paths_human)
     heatmap = model.get_img_heatmap(img_path=list_of_images_file_paths_human[0])
     bbox_and_categories = model.get_model_prediction(img_path=list_of_images_file_paths_human[0])
     activations = model.get_img_activations(img_path=list_of_images_file_paths_human[0])
 
     # Arrange ML outputs into internal API format
     heatmap_vm = Heatmap(array=heatmap)
-    print(bbox_and_categories)
     annotations_vm = Annotations(
         bboxes = [BoundingBox(array=bbox) for bbox in bbox_and_categories['bbox']], 
         categories = [Category(category_id=cat) for cat in bbox_and_categories['category_id']], 
