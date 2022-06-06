@@ -1,26 +1,52 @@
-import os, json
-from abc import ABC, abstractmethod
+import os
+from fastapi import Depends, FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+from typing import Callable
 
-@abstractmethod
-class DataPreparation(ABC):
-    def _load_img_bbox(self, img_path: str, img_dir, annotations_dir: str):
-        pass
+from shared.exception_handlers import TenyksException, TenyksRequestValidationError
+from .routers import datasets, models
+
+from shared.utils_fastapi import create_start_app_handler, create_stop_app_handler
+
+def create_app():
+
+    app = FastAPI()
+
+    origins= [os.getenv("")]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 
-class JsonDataPreparation(DataPreparation):
-    def _load_img_bbox(self, img_path: str, img_dir, annotations_dir: str):
-        # Get relative image path
-        rel_img_path = os.path.relpath(img_path, img_dir)
+    # @app.exception_handler(TenyksException)
+    async def tenyks_exception_handler(request: Request, exc: Exception):
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": f"Oops! did something. Terminator dispatched...{exc}"},
+        )
+    
+    # @app.exception_handler(TenyksRequestValidationError)  
+    async def tenyks_validation_exception_handler(request: Request, exc: RequestValidationError):
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"message": f"Request cannot be procesed. Please check your client call...{exc}"},
+        )
 
-        # Compute the path to the annotations directory
-        annotations_img_path = os.path.abspath(os.path.join(annotations_dir, rel_img_path))
-        annotations_img_path = os.path.splitext(annotations_img_path)[0] + ".json"
+    app.include_router(datasets.router)
+    app.include_router(models.router)
 
-        # Load the annotations data
-        with open(annotations_img_path, "r") as annotations_file:
-            img_data = json.load(annotations_file)
+    app.add_event_handler("startup", create_start_app_handler(app))
+    app.add_event_handler("shutdown", create_stop_app_handler(app))
+    app.add_exception_handler(Exception, tenyks_exception_handler)
+    app.add_exception_handler(RequestValidationError, tenyks_validation_exception_handler)
 
-        # Retrieve the bounding box data
-        bbox_data = img_data['bbox']
-
-        return bbox_data
+    return app
+    
+app = create_app()

@@ -8,8 +8,8 @@ class DatasetDto:
 
     id: int
     dataset_type_id: int
-    name: str
-    size: int
+    dataset_name: str
+    dataset_size: int
     dataset_url: str
 
 @dataclass

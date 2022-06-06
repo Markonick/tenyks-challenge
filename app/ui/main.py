@@ -1,13 +1,13 @@
+import os, json
 import asyncio
 from dataclasses import dataclass
 import glob
-import os, json
 from abc import ABC, abstractmethod
 import time
 import aiofiles
 import requests
 
-from app.shared.view_models import (
+from shared.view_models import (
     Activations, 
     Annotations, 
     BoundingBox, 
@@ -17,7 +17,7 @@ from app.shared.view_models import (
     Model, 
     Heatmap
 )
-from model_data import DummyModel
+from shared.model_data import DummyModel
 
 """
 A client should be able to use the Tenyks SDK in order to perform the following actions:
@@ -118,15 +118,18 @@ if __name__ == "__main__":
     # Set inputs (UI Service) ##################################################################
     ############################################################################################
     # annotations_path = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/human_dataset/annotations/"
-    dataset_path_human = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/human_dataset"
-    dataset_path_terminator = "/Users/nicolas/Projects/tenyks-challenge/dataset_data/terminator_dataset"
+    dataset_path_human = "./ui/dataset_data/human_dataset"
+    dataset_path_terminator = "./ui/dataset_data/terminator_dataset"
     annotations_path_human = f"{dataset_path_human}/annotations/"
     annotations_path_terminator = f"{dataset_path_terminator}/annotations/"
     images_path_human = f"{dataset_path_human}/images/"
     images_path_terminator = f"{dataset_path_terminator}/images/"
     list_of_annotations_file_paths_human = glob.glob(f"{annotations_path_human}*.json")
     list_of_annotations_file_paths_terminator = glob.glob(f"{images_path_terminator}*.json")
-    list_of_images_file_paths = glob.glob(f"{images_path}*.jpg")
+    list_of_images_file_paths_human = glob.glob(f"{images_path_human}*.jpg")
+    list_of_images_file_paths_terminator = glob.glob(f"{images_path_terminator}*.jpg")
+
+    list_of_images_file_paths_terminator =os.scandir(images_path_terminator)
 
     # Read Json annotations files (UI Service) - IO BOUND, use async ###########################
     ############################################################################################
@@ -151,34 +154,43 @@ if __name__ == "__main__":
     model_name = "Terminator Model"
     dataset_human_vm = Dataset(name=dataset_name_human, size=size_human, type='jpg', url=dataset_path_human)
     dataset_terminator_vm = Dataset(name=dataset_name_terminator, size=size_terminator, type='jpg', url=images_path_terminator)
-    model_vm = Model(model_id=model_id, name=model_name, datasets=[dataset_human_vm, dataset_terminator_vm])
+    model_vm = Model( name=model_name, datasets=[dataset_human_vm.name, dataset_terminator_vm.name])
     
     # Persist dataset data into DB (BACKEND Service) - IO BOUND, use async #####################
     ############################################################################################
-    backend_url = "http://localhost:5000"
-    requests.post(backend_url, data={'key':'value'})
+    backend_url = "http://backend:8000/api/datasets"
+    headers = {"Content-Type": "application/json; charset=utf-8"}
+    data={
+        "type": "jpg",
+        "name": "terminator_dataset5",
+        "size": 12,
+        "url": "here/is/the/path4"
+    }
+    with requests.Session() as session:
+        session.post(backend_url, headers=headers, json=data)
     
     # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
     ############################################################################################
     
     model = DummyModel(model_id)
-    
-    heatmap = model.get_img_heatmap(img_path=list_of_images_file_paths[0])
-    bbox_and_categories = model.get_model_prediction(img_path=list_of_images_file_paths[0])
-    activations = model.get_img_activations(img_path=list_of_images_file_paths[0])
+    print(list_of_images_file_paths_human)
+    heatmap = model.get_img_heatmap(img_path=list_of_images_file_paths_human[0])
+    bbox_and_categories = model.get_model_prediction(img_path=list_of_images_file_paths_human[0])
+    activations = model.get_img_activations(img_path=list_of_images_file_paths_human[0])
 
     # Arrange ML outputs into internal API format
     heatmap_vm = Heatmap(array=heatmap)
+    print(bbox_and_categories)
     annotations_vm = Annotations(
-        bbox=BoundingBox(array=[bbox for bbox in bbox_and_categories['bbox']]), 
-        category=Category(category_id=[cat for cat in bbox_and_categories['category_id']]), 
+        bboxes = [BoundingBox(array=bbox) for bbox in bbox_and_categories['bbox']], 
+        categories = [Category(category_id=cat) for cat in bbox_and_categories['category_id']], 
     )
     activations_vm = Activations(array=[activation.tolist() for activation in activations])
 
     # Save ML outputs internal API format into DB (BACKEND Service) - IO BOUND, use async ######
     ############################################################################################
     
-    print(heatmap)
-    print(bbox_and_categories)
-    print(activations)
-    print(activations_vm.array)
+    # print(heatmap)
+    # print(bbox_and_categories)
+    # print(activations)
+    # print(activations_vm.array)

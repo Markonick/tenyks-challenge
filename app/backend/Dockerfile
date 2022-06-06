@@ -1,13 +1,14 @@
 FROM python:3.9-slim
 
-EXPOSE 5000
+EXPOSE 8000
 
-WORKDIR /backend
-COPY . /backend
+WORKDIR /app
+COPY app/backend /app/backend
+COPY app/shared /app/shared
+COPY app/__init__.py /app
+# RUN  --mount=type=cache,target=/root/.cache \
+#     pip3 install -r shared/requirements.txt
 
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt --no-cache-dir
+RUN  pip3 install -r shared/requirements.txt
 
-RUN pip install -r requirements.txt
-
-CMD python main.py
+CMD ["uvicorn", "backend.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]

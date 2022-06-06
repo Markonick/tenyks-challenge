@@ -1,69 +1,46 @@
-from typing import Union
+import asyncpg, os, logging
+from typing import Union, Callable
 from pickle import DICT
 from fastapi import FastAPI, status, Request
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from shared.types_common import (
-    ComponentError,
-    ComponentResponse,
-    JobId,
-    StatusGroup,
-)
-import logging
 
 logger = logging.getLogger(__name__)
 
 
-def _get_content_for_exception(
-    exc: Exception, msg: dict, status_group: StatusGroup
-) -> Union[dict, ComponentResponse]:
-    """
-    Tries to compose a response body wrapped in Mia Envelope,
-    if the Exception.body is present and JobId is present in the Request
-    """
-    try:
-        jobId = JobId(**exc.body["jobId"])
-        content = ComponentResponse(
-            jobId=jobId,
-            response=ComponentError(
-                type=status_group,
-                message=msg,
-            ),
-        ).dict()
-    except Exception as e:
-        logger.error(e)
-        content = msg
+def create_start_app_handler(
+    app: FastAPI,
+) -> Callable:  # type: ignore
+    async def start_app() -> None:
+        try:
+            await connect_to_db(app,)
+        except:
+            raise("Could not connect to the DB. Is the DB up and running?")
 
-    return content
+    return start_app
 
 
-async def exception_handler(request: Request, exc: Exception):
-    msg = str(exc)
-    content = _get_content_for_exception(exc, msg, StatusGroup.INTERNAL_ERROR)
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=jsonable_encoder(content),
+def create_stop_app_handler(app: FastAPI) -> Callable:  # type: ignore
+    async def stop_app() -> None:
+        await close_db_connection(app)
+
+    return stop_app
+
+async def connect_to_db(app: FastAPI, ) -> None:
+    # logger.info("Connecting to PostgreSQL")
+    app.state.pool = await asyncpg.create_pool(
+        user=os.getenv('PSQL_USERNAME'),
+        password=os.getenv('PSQL_PASSWORD'),
+        host='postgres',
+        # port=5432,
+        database=os.getenv('PSQL_DATABASE'),
+        server_settings={'search_path': os.getenv('PSQL_SCHEMA')}
     )
 
+    # logger.info("Connection established")
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    msg = str(exc.errors())
-    content = _get_content_for_exception(exc, msg, StatusGroup.CLIENT_ERROR)
+async def close_db_connection(app: FastAPI) -> None:
+    # logger.info("Closing connection to database")
 
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=jsonable_encoder(content),
-    )
+    await app.state.pool.close()
 
-
-def create_app() -> FastAPI:
-    """
-    Create a FastAPI instance with custom exception handlers
-    """
-    app = FastAPI()
-
-    # app.add_exception_handler(RequestValidationError, validation_exception_handler)
-    # app.add_exception_handler(Exception, exception_handler)
-
-    return app
+    # logger.info("Connection closed")

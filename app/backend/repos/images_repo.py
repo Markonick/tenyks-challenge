@@ -2,9 +2,9 @@ import json
 from typing import List
 from asyncpg.connection import Connection
 import pydantic
-from ...shared.database import typed_fetch
+from shared.database import typed_fetch
 from ..dtos import ImageDto
-from ...shared.database import BaseRepository
+from shared.database import BaseRepository
 
 
 class ImagesRepository(BaseRepository):
@@ -78,7 +78,7 @@ class ImagesRepository(BaseRepository):
                 RETURNING id;
             """
                 
-            result = await self.connection.raw_fetch(
+            result = await self.connection.fetch(
                 dataset_insert_query_string,
                 dataset_type_id,
                 dataset_name,
@@ -97,7 +97,7 @@ class ImagesRepository(BaseRepository):
                 WHERE name=$1;
             """
             
-            dataset_type_id = await self.connection.raw_fetch(
+            dataset_type_id = await self.connection.fetch(
                 get_dataset_type_id_string,
                 dataset_type,
             )
@@ -108,7 +108,7 @@ class ImagesRepository(BaseRepository):
                 RETURNING id;
             """
                 
-            result = await self.connection.raw_fetch(
+            result = await self.connection.fetch(
                 dataset_insert_query_string,
                 dataset_type_id,
                 dataset_name,

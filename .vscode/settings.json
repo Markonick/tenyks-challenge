@@ -1,0 +1,7 @@
+{
+    "python.formatting.provider": "black",
+    "html.format.extraLiners": "",
+    "[python]": {
+        "editor.formatOnPaste": false
+    }
+}

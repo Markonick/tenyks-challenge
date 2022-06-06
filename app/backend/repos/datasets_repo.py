@@ -2,9 +2,9 @@ import json
 from typing import List
 from asyncpg.connection import Connection
 import pydantic
-from ...shared.database import typed_fetch
+from shared.database import typed_fetch
 from ..dtos import DatasetDto
-from ...shared.database import BaseRepository
+from shared.database import BaseRepository
 
 
 class DatasetsRepository(BaseRepository):
@@ -13,7 +13,7 @@ class DatasetsRepository(BaseRepository):
     def __init__(self, conn: Connection) -> None:
         super().__init__(conn)
 
-    async def get_dataset_by_name(self, name: str) -> json:
+    async def get_dataset_by_name(self, name: str) -> DatasetDto:
         """Get dataset based on its name"""
         
         async with self.connection.transaction():
@@ -21,15 +21,18 @@ class DatasetsRepository(BaseRepository):
                 SELECT
                     ds.id,
                     ds.dataset_type_id,
-                    ds.name as dataset_name
+                    ds.dataset_name,
+                    ds.dataset_size,
                     ds.dataset_url
                 FROM tenyks.dataset ds
-                WHERE name=$1;
+                WHERE dataset_name=$1;
             """
-            dataset = await typed_fetch(self.connection, DatasetDto, query_string, name)
-            return dataset
 
-    async def get_dataset_by_id(self, dataset_id: int) -> json:
+            result = await typed_fetch(self.connection, DatasetDto, query_string, name)
+ 
+            return [] if len(result) == 0 else result[0]
+
+    async def get_dataset_by_id(self, dataset_id: int) -> DatasetDto:
         """Get dataset based on its id"""
 
         async with self.connection.transaction():
@@ -37,41 +40,45 @@ class DatasetsRepository(BaseRepository):
                 SELECT
                     ds.id,
                     ds.dataset_type_id,
-                    ds.name as dataset_name
+                    ds.dataset_name,
+                    ds.dataset_size,
                     ds.dataset_url
                 FROM tenyks.dataset ds
-                FROM site sit
                 WHERE id=$1;
             """
-            dataset = await typed_fetch(self.connection, DatasetDto, query_string, dataset_id)
-            return dataset
 
-    async def create_dataset(self, dataset_type: str, dataset_name: str, dataset_url: str, dataset_size: int, ) -> None:
+            result = await typed_fetch(self.connection, DatasetDto, query_string, dataset_id)
+            print(result)
+            return [] if len(result) == 0 else result[0]
+
+    async def create_dataset(self, dataset_type: str, dataset_name: str, dataset_size: int, dataset_url: str,  ) -> None:
         """Create a new dataset"""
 
         async with self.connection.transaction():
             get_dataset_type_id_string = f"""
                 SELECT 
-                    dataset_type_id 
-                FROM tenyks.dataset ds
-                JOIN tenyks.dataset_type dst ON ds.dataset_type_id = dst.id
-                WHERE name=$1;
+                    dst.id 
+                FROM tenyks.dataset_type dst
+                WHERE dst.name=$1;
             """
-            
-            dataset_type_id = await self.connection.raw_fetch(
+            print(dataset_type)
+            dataset_type_id = await self.connection.fetchval(
                 get_dataset_type_id_string,
                 dataset_type,
             )
 
+            print(dataset_type_id)
+
             dataset_insert_query_string = f"""
-                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_url, dataset_size)
+                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_size, dataset_url)
                 VALUES ($1, $2, $3, $4)
                 RETURNING id;
             """
-                
-            result = await self.connection.raw_fetch(
+           
+            result = await self.connection.fetch(
                 dataset_insert_query_string,
                 dataset_type_id,
                 dataset_name,
-                dataset_url,
+                dataset_size,
+                dataset_url
             )
