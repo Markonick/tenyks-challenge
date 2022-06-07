@@ -44,6 +44,27 @@ services:
       postgres:
         condition: service_healthy
 
+  ml_extraction:
+    container_name: ml_extraction
+    build:
+      context: .
+      dockerfile: app/ml_extraction/Dockerfile
+    volumes:
+      - ./app/ml_extraction:/app/ml_extraction
+      - ./app/shared:/app/shared
+    environment:
+      PSQL_USERNAME: ${PSQL_USERNAME}
+      PSQL_HOSTNAME: ${PSQL_HOSTNAME}
+      PSQL_PASSWORD: ${PSQL_PASSWORD}
+      PSQL_DATABASE: ${PSQL_DATABASE}
+      PSQL_SCHEMA: ${PSQL_SCHEMA}
+      DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
+    ports:
+     - "8002:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     container_name: "postgres"
     image: "postgres:13-alpine"

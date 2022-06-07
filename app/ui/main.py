@@ -82,17 +82,6 @@ def load_json(file_path: str) -> dict:
 
     return result
 
-async def load_json_async(file_path: str) -> dict:
-
-    async with aiofiles.open(file_path, mode='rb') as f:
-        contents = await f.read()
-
-    return contents
-
-async def load_many_json_async(file_path_generator: Generator) -> List[dict]:
-    for path in file_path_generator:
-        yield await load_json_async(path)
-
 if __name__ == "__main__":
     
     loop = get_event_loop()
@@ -184,18 +173,7 @@ if __name__ == "__main__":
 
     # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
     ############################################################################################
-    # print(list_of_images_file_paths_human)
-    # heatmap = model.get_img_heatmap(img_path=list_of_images_file_paths_human[0])
-    # bbox_and_categories = model.get_model_prediction(img_path=list_of_images_file_paths_human[0])
-    # activations = model.get_img_activations(img_path=list_of_images_file_paths_human[0])
 
-    # # Arrange ML outputs into internal API format
-    # heatmap_vm = Heatmap(array=heatmap)
-    # annotations_vm = Annotations(
-    #     bboxes = [BoundingBox(array=bbox) for bbox in bbox_and_categories['bbox']], 
-    #     categories = [Category(category_id=cat) for cat in bbox_and_categories['category_id']], 
-    # )
-    # activations_vm = Activations(array=[activation.tolist() for activation in activations])
 
     # Save ML outputs internal API format into DB (BACKEND Service) - IO BOUND, use async ######
     ############################################################################################
