@@ -9,3 +9,4 @@ fastapi[all]==0.70.1
 Pillow
 requests
 watchgod
+fastapi

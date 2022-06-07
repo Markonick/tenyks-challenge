@@ -7,7 +7,7 @@ from requests import Session
 from typing import Generator, List
 from asyncio import get_event_loop
 
-from .request_handler import request_handler_post
+from shared.request_handler import request_handler_post
 from shared.view_models import (
     Activations, 
     Annotations, 

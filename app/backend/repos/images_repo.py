@@ -1,6 +1,5 @@
 import json
 from typing import List
-from unicodedata import category
 from asyncpg.connection import Connection
 import pydantic
 from shared.view_models import Annotations

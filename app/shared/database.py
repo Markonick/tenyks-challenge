@@ -39,6 +39,7 @@ def get_repository(
         return repo_type(conn)
 
     return _get_repo
+    
 async def typed_fetch(conn: Connection, typ: T, query: str, *args) -> List[T]:
     """Maps all columns of a database record to a Python data class."""
 

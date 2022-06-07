@@ -22,7 +22,7 @@ async def request_handler_get(url, request: dataclass) -> dict:
     data = json.dumps(dataclass.asdict(request))
   
     async with aiohttp.ClientSession() as session: 
-        async with session.post( url=url, headers=headers, params=data) as resp:
+        async with session.get( url=url, headers=headers, params=data) as resp:
             result = await resp.text()
 
     return result
