@@ -1,13 +1,10 @@
+from dataclasses import dataclass
 import glob
 import os, json
-import aiofiles
-import aiohttp
-import fastapi
-from requests import Session
-from typing import Generator, List
+from typing import List
 from asyncio import get_event_loop
 
-from shared.request_handler import request_handler_post
+from shared.request_handlers import get_async_request_handler, post_async_request_handler
 from shared.view_models import (
     Activations, 
     Annotations, 
@@ -43,25 +40,49 @@ class TenyksSDK():
         self._image = ""
 
     @property
-    def dataset(self) -> Dataset:
-        print('property dataset called')
-        return self._dataset
+    async def dataset(self, name: str) -> Model:
+        @dataclass
+        dataset_request = Dataset(name=name)
+        resp = await get_async_request_handler(url=f"{base_url}/datasets", request=dataset_request)
+  
+        return resp
 
     @dataset.setter
-    def dataset(self, value: Dataset):
-        print('property.setter dataset called')
-        self._dataset = value
+    async def dataset(self, name: str, size: int, image_type: str, path: str):
+        try:
+            dataset_request = Dataset(name=name, size=size, type=image_type, url=path)
+            resp = await post_async_request_handler(url=f"{base_url}/datasets", request=dataset_request)
+        except Exception as ex:
+            print(ex)
+        
+        print('Dataset POST ................Complete')
+        return resp
 
     @property
-    def model(self) -> Model:
-        print('property model called')
-        return self._model
+    async def model(self, name: str) -> Model:
+        try:
+            model_request = Model(name=name)
+            resp = await get_async_request_handler(url=f"{base_url}/models", request=model_request)
+        except Exception as ex:
+            print(ex)
+            pass
+
+        print('Model GET  ................Complete')
+        return resp
 
     @model.setter
-    def model(self, value: Model):
-        print('property.setter model called')
-        self._model = value
+    def model(self, name: str, datasets: List[int]):
+        try:
+            model_request = Model(name=name, datasets=datasets)
+            resp = post_async_request_handler(url=f"{base_url}/models", request=model_request)
+            print('Model POST  ................Complete')
+        except Exception as ex:
+            print(ex)
+            print('Model POST  ................Failed')
+            pass
 
+        return resp
+        
     @property
     def image(self) -> Image:
         print('property image called')
@@ -119,22 +140,7 @@ if __name__ == "__main__":
     image_dataset_size = len(glob.glob(human_images_path))
     annotations_dataset_size = len(glob.glob(human_annotations_path))
     
-    try:
-        dataset_request = Dataset(name=dataset_name, size=dataset_size, type=dataset_type, url=terminator_dataset_base_path)
-        dataset_result = loop.run_until_complete(request_handler_post(url=f"{base_url}/datasets", request=dataset_request))
-        print('Dataset POST ................Complete')
-    except Exception as ex:
-        print(ex)
-        print('Dataset POST ................Failed')
-
-    try:
-        model_request = Model(name=model_name, datasets=[dataset_name])
-        model_result = loop.run_until_complete(request_handler_post(url=f"{base_url}/models", request=model_request))
-        print('Model POST  ................Complete')
-    except Exception as ex:
-        print(ex)
-        print('Model POST  ................Failed')
-        pass
+   
 
     while True:
         try:

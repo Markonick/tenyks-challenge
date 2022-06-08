@@ -5,12 +5,12 @@ from dataclasses import dataclass
 from fastapi import Response
 
 
-async def request_handler_post(url, request: dataclass) -> dict:
+async def get_async_request_handler(url, request: dataclass) -> dict:
     headers = {"content-type": "application/json"}
-    data = json.dumps(dataclasses.asdict(request))
-
+    data = json.dumps(dataclass.asdict(request))
+  
     async with httpx.AsyncClient() as client:
-        response = await client.post(url=url, headers=headers, data=data)
+        response = await client.get(url=url, headers=headers, params=data)
         try:
             response.raise_for_status()
         except httpx.HTTPError as exc:
@@ -18,12 +18,12 @@ async def request_handler_post(url, request: dataclass) -> dict:
 
     return response
 
-async def request_handler_get(url, request: dataclass) -> dict:
+async def post_async_request_handler(url, request: dataclass) -> dict:
     headers = {"content-type": "application/json"}
-    data = json.dumps(dataclass.asdict(request))
-  
+    data = json.dumps(dataclasses.asdict(request))
+
     async with httpx.AsyncClient() as client:
-        response = await client.get(url=url, headers=headers, params=data)
+        response = await client.post(url=url, headers=headers, data=data)
         try:
             response.raise_for_status()
         except httpx.HTTPError as exc:
