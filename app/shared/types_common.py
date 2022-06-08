@@ -25,7 +25,10 @@ class TenyksError:
     message: str
     type: StatusGroup = StatusGroup.INTERNAL_ERROR
     
-
+@dataclass
+class TenyksExtractionRequest:
+    type: str
+    
 class TenyksResponse(GenericModel, Generic[ResponseT]):
     response: Union[TenyksSuccess[ResponseT], TenyksError]
 

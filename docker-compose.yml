@@ -1,15 +1,15 @@
 version: "3.9"
 services:
 
-  ui:
-    container_name: ui
+  sdk:
+    container_name: sdk
     build:
       context: .
-      dockerfile: app/ui/Dockerfile
+      dockerfile: app/sdk/Dockerfile
     volumes:
-      - ./app/ui:/app/ui
+      - ./app/sdk:/app/sdk
       - ./app/shared:/app/shared
-      - ./dataset_data:/app/ui/dataset_data
+      - ./dataset_data:/app/sdk/dataset_data
     environment:
       PSQL_USERNAME: ${PSQL_USERNAME}
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}

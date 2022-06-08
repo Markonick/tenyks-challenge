@@ -65,7 +65,8 @@ class DatasetsRepository(BaseRepository):
                 get_dataset_type_id_string,
                 dataset_type,
             )
-
+            print(dataset_type)
+            print(dataset_type_id)
             dataset_insert_query_string = f"""
                 INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_size, dataset_url)
                 VALUES ($1, $2, $3, $4)

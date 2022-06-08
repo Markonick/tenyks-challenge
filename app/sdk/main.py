@@ -1,8 +1,10 @@
+import asyncio
 from dataclasses import dataclass
+from email.generator import Generator
 import glob
 import os, json
 from typing import List
-from asyncio import get_event_loop
+from shared.types_common import TenyksExtractionRequest
 
 from shared.request_handlers import get_async_request_handler, post_async_request_handler
 from shared.view_models import (
@@ -42,9 +44,7 @@ class ModelGetRequest:
 
 class TenyksSDK():
     def __init__(self,) -> None:
-        self._dataset = ""
-        self._model = ""
-        self._image = ""
+        pass
 
     @property
     async def dataset(self, name: str) -> Model:
@@ -54,10 +54,16 @@ class TenyksSDK():
   
         return resp
 
-    @dataset.setter
-    async def dataset(self, name: str, size: int, image_type: str, path: str):
+    async def save_dataset(self, name: str, images_path: str, annotations_path: str, dataset_path: str):
 
-        dataset_request = Dataset(name=name, size=size, type=image_type, url=path)
+        annotations_dataset_size = len(glob.glob(annotations_path))
+        images_path_gen = os.scandir(images_path)
+        image_path = next(images_path_gen).name
+        # Assumption/Trade-off (could be wrong): All image types within a dataset are of a single type eg. jpg
+       
+        dataset_type = str(image_path).split(".")[-1]
+
+        dataset_request = Dataset(name=name, size=annotations_dataset_size, type=dataset_type, url=dataset_path)
         resp = await post_async_request_handler(url=f"{base_url}/datasets", request=dataset_request)
 
         return resp
@@ -70,10 +76,9 @@ class TenyksSDK():
         return resp
 
     @model.setter
-    def model(self, name: str, datasets: List[int]):
+    async def model(self, name: str, datasets: List[int]):
         model_request = Model(name=name, datasets=datasets)
-        resp = post_async_request_handler(url=f"{base_url}/models", request=model_request)
-
+        resp = await post_async_request_handler(url=f"{base_url}/models", request=model_request)
         return resp
         
     @property
@@ -86,8 +91,59 @@ class TenyksSDK():
         print('property.setter image called')
         self._image = value
 
-    def extract(self):
-        self._extractor.save()
+    @property
+    def images(self) -> Image:
+        print('property images called')
+        return self._image
+
+    @images.setter
+    async def images(self, images_path: str, annotations_path: str):
+        print('property.setter images called')
+        
+        annotations_path_gen = os.scandir(annotations_path)
+        images_path_gen = os.scandir(images_path)
+        image_dataset_size = len(glob.glob(images_path))
+        annotations_dataset_size = len(glob.glob(annotations_path))
+
+        while True:
+            try:
+            
+                image_path = next(annotations_path_gen)
+                annotations_path = next(terminator_annotations_path_gen)
+
+                if image_dataset_size != images_path_gen:
+                    raise(
+                        (
+                            f"Image and annotation folders contain an unequal number of items!"
+                            f"Number of images ({image_dataset_size}) != Number of annotations ({annotations_dataset_size})"
+                        )
+                    )
+                
+                bbox_and_categories = load_json(file_path=annotations_path)
+                
+                image_request = Image(
+                    name=str(image_path.name),
+                    dataset_name=dataset_name,
+                    url=str(image_path),
+                    annotations=Annotations(
+                        bboxes=[BoundingBox(array=bbox) for bbox in bbox_and_categories['bbox']],
+                        categories=[Category(category_id=cat) for cat in bbox_and_categories['category_id']],
+                    )
+                )
+                
+                resp = await post_async_request_handler(url=f"{base_url}/images", request=image_request)
+                print('IMAGE POST  ................Complete')
+            except StopIteration:
+                break
+            except Exception as ex:
+                print(ex)
+                print('IMAGE POST  ................Failed')
+            return resp
+
+    async def extract(self, extraction_type):
+        print("select")
+        resp = await post_async_request_handler(url=f"{extract_url}/extract", request=TenyksExtractionRequest(type=extraction_type))
+        return resp
 
 def load_json(file_path: str) -> dict:
 
@@ -98,16 +154,14 @@ def load_json(file_path: str) -> dict:
 
 if __name__ == "__main__":
     
-    loop = get_event_loop()
-    
     # Set inputs (UI Service) ##################################################################
     ############################################################################################
     
-    human_dataset_base_path = "./ui/dataset_data/human_dataset"
+    human_dataset_base_path = "./sdk/dataset_data/human_dataset"
     human_annotations_path = f"{human_dataset_base_path}/annotations/"
     human_images_path = f"{human_dataset_base_path}/images/"
 
-    terminator_dataset_base_path = "./ui/dataset_data/terminator_dataset"
+    terminator_dataset_base_path = "./sdk/dataset_data/terminator_dataset"
     terminator_annotations_path = f"{terminator_dataset_base_path}/annotations/"
     terminator_images_path = f"{terminator_dataset_base_path}/images/"
     
@@ -126,6 +180,7 @@ if __name__ == "__main__":
     # Persist dataset data into DB (BACKEND Service) - IO BOUND, use async #####################
     ############################################################################################
     base_url = "http://backend:8000/api"
+    extract_url = "http://extract:8000/api"
     dataset_name = 'terminator_dataset'
     dataset_type = 'jpg'
     dataset_url = human_images_path
@@ -135,41 +190,17 @@ if __name__ == "__main__":
     
    
 
-    while True:
-        try:
-           
-            image_path = next(terminator_images_path_gen)
-            annotations_path = next(terminator_annotations_path_gen)
-            if image_dataset_size != annotations_dataset_size:
-               raise(
-                   (
-                       f"Image and annotation folders contain an unequal number of items!"
-                       f"Number of images ({image_dataset_size}) != Number of annotations ({annotations_dataset_size})"
-                   )
-               )
-            dataset_type = str(annotations_path).split(".")[-1]
-            # dataset_type = 'jpg'
-            bbox_and_categories = load_json(file_path=annotations_path)
-            
-            image_request = Image(
-                name=str(image_path.name),
-                dataset_name=dataset_name,
-                url=str(image_path),
-                annotations=Annotations(
-                    bboxes=[BoundingBox(array=bbox) for bbox in bbox_and_categories['bbox']],
-                    categories=[Category(category_id=cat) for cat in bbox_and_categories['category_id']],
-                )
-            )
-            
-            image_result = loop.run_until_complete(request_handler_post(url=f"{base_url}/images", request=image_request))
-            print('IMAGE POST  ................Complete')
-        except StopIteration:
-            break
-        except Exception as ex:
-            print(ex)
-            print('IMAGE POST  ................Failed')
+    tc = TenyksSDK()
 
-
+    result = asyncio.run(
+        tc.save_dataset(
+            name=dataset_name,
+            images_path=human_images_path,
+            annotations_path=human_annotations_path,
+            dataset_path=human_dataset_base_path
+        )
+    )
+    print(result)
     # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
     ############################################################################################
 
