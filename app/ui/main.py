@@ -15,7 +15,6 @@ from shared.view_models import (
     Model, 
     Heatmap
 )
-from shared.model_data import DummyModel
 
 """
 A client should be able to use the Tenyks SDK in order to perform the following actions:
@@ -33,6 +32,14 @@ There are multiple possibilities for the input:
 Also we must consider being extensible as in the future we might add more metadata at the extraction stage
 """
 
+@dataclass
+class DatasetGetRequest:
+    name: str
+
+@dataclass
+class ModelGetRequest:
+    name: str
+
 class TenyksSDK():
     def __init__(self,) -> None:
         self._dataset = ""
@@ -41,45 +48,31 @@ class TenyksSDK():
 
     @property
     async def dataset(self, name: str) -> Model:
-        @dataclass
-        dataset_request = Dataset(name=name)
+
+        dataset_request = DatasetGetRequest(name=name)
         resp = await get_async_request_handler(url=f"{base_url}/datasets", request=dataset_request)
   
         return resp
 
     @dataset.setter
     async def dataset(self, name: str, size: int, image_type: str, path: str):
-        try:
-            dataset_request = Dataset(name=name, size=size, type=image_type, url=path)
-            resp = await post_async_request_handler(url=f"{base_url}/datasets", request=dataset_request)
-        except Exception as ex:
-            print(ex)
-        
-        print('Dataset POST ................Complete')
+
+        dataset_request = Dataset(name=name, size=size, type=image_type, url=path)
+        resp = await post_async_request_handler(url=f"{base_url}/datasets", request=dataset_request)
+
         return resp
 
     @property
     async def model(self, name: str) -> Model:
-        try:
-            model_request = Model(name=name)
-            resp = await get_async_request_handler(url=f"{base_url}/models", request=model_request)
-        except Exception as ex:
-            print(ex)
-            pass
+        model_request = ModelGetRequest(name=name)
+        resp = await get_async_request_handler(url=f"{base_url}/models", request=model_request)
 
-        print('Model GET  ................Complete')
         return resp
 
     @model.setter
     def model(self, name: str, datasets: List[int]):
-        try:
-            model_request = Model(name=name, datasets=datasets)
-            resp = post_async_request_handler(url=f"{base_url}/models", request=model_request)
-            print('Model POST  ................Complete')
-        except Exception as ex:
-            print(ex)
-            print('Model POST  ................Failed')
-            pass
+        model_request = Model(name=name, datasets=datasets)
+        resp = post_async_request_handler(url=f"{base_url}/models", request=model_request)
 
         return resp
         
