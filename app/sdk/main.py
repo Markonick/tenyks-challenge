@@ -75,8 +75,7 @@ class TenyksSDK():
 
         return resp
 
-    @model.setter
-    async def model(self, name: str, datasets: List[int]):
+    async def save_model(self, name: str, datasets: List[str]):
         model_request = Model(name=name, datasets=datasets)
         resp = await post_async_request_handler(url=f"{base_url}/models", request=model_request)
         return resp
@@ -96,8 +95,7 @@ class TenyksSDK():
         print('property images called')
         return self._image
 
-    @images.setter
-    async def images(self, images_path: str, annotations_path: str):
+    async def save_images(self, images_path: str, annotations_path: str):
         print('property.setter images called')
         
         annotations_path_gen = os.scandir(annotations_path)
@@ -110,8 +108,8 @@ class TenyksSDK():
             
                 image_path = next(annotations_path_gen)
                 annotations_path = next(terminator_annotations_path_gen)
-
-                if image_dataset_size != images_path_gen:
+                print(image_dataset_size, image_dataset_size)
+                if image_dataset_size != annotations_dataset_size:
                     raise(
                         (
                             f"Image and annotation folders contain an unequal number of items!"
@@ -134,10 +132,11 @@ class TenyksSDK():
                 resp = await post_async_request_handler(url=f"{base_url}/images", request=image_request)
                 print('IMAGE POST  ................Complete')
             except StopIteration:
-                break
+                raise
             except Exception as ex:
                 print(ex)
                 print('IMAGE POST  ................Failed')
+                raise
             return resp
 
     async def extract(self, extraction_type):
@@ -201,6 +200,20 @@ if __name__ == "__main__":
         )
     )
     print(result)
+
+    result = asyncio.run(
+        tc.save_model(name="test_model3", datasets=[dataset_name])
+    )
+    print(result)
+    result = asyncio.run(
+        tc.save_model(name="test_model4", datasets=[dataset_name, "non_existent_dataset"])
+    )
+    print(result)
+    result = asyncio.run(
+        tc.save_images(images_path=human_images_path, annotations_path=human_annotations_path)
+    )
+    print(result)
+
     # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
     ############################################################################################
 

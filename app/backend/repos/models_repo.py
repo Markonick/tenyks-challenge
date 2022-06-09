@@ -50,7 +50,12 @@ class ModelsRepository(BaseRepository):
                 VALUES ($1)
                 RETURNING id;
             """
-                
+            print(name)
+            print(name)
+            print(name)
+            print(name)
+            print(name)
+            print(name)
             model_id = await self.connection.fetchval(
                 model_insert_query_string,
                 name,
