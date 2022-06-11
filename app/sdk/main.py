@@ -1,10 +1,11 @@
 import asyncio
+import aioboto3
 from dataclasses import dataclass
 from email.generator import Generator
 import glob
 import os, json
 from typing import List
-from shared.types_common import TenyksExtractionRequest
+from shared.types_common import ExtractionTypes, TenyksExtractionRequest
 
 from shared.request_handlers import get_async_request_handler, post_async_request_handler
 from shared.view_models import (
@@ -56,14 +57,26 @@ class TenyksSDK():
 
     async def save_dataset(self, name: str, images_path: str, annotations_path: str, dataset_path: str):
 
+        session = aioboto3.Session()
+        async with session.resource("s3") as s3:
+            bucket = await s3.Bucket('dataset')  # <----------------
+            async for s3_object in bucket.objects.all():
+                print(s3_object)
+
         annotations_dataset_size = len(glob.glob(annotations_path))
         images_path_gen = os.scandir(images_path)
         image_path = next(images_path_gen).name
         # Assumption/Trade-off (could be wrong): All image types within a dataset are of a single type eg. jpg
        
         dataset_type = str(image_path).split(".")[-1]
-
-        dataset_request = Dataset(name=name, size=annotations_dataset_size, type=dataset_type, url=dataset_path)
+        
+        dataset_request = Dataset(
+            name=name,
+            size=annotations_dataset_size,
+            type=dataset_type,
+            dataset_url=dataset_path,
+            images_url=images_path,
+        )
         resp = await post_async_request_handler(url=f"{base_url}/datasets", request=dataset_request)
 
         return resp
@@ -82,21 +95,17 @@ class TenyksSDK():
         
     @property
     def image(self) -> Image:
-        print('property image called')
         return self._image
 
     @image.setter
     def image(self, value: Image):
-        print('property.setter image called')
         self._image = value
 
     @property
     def images(self) -> Image:
-        print('property images called')
         return self._image
 
     async def save_images(self, images_path: str, annotations_path: str):
-        print('property.setter images called')
         
         annotations_path_gen = os.scandir(annotations_path)
         images_path_gen = os.scandir(images_path)
@@ -106,9 +115,9 @@ class TenyksSDK():
         while True:
             try:
             
-                image_path = next(annotations_path_gen)
+                image_path = next(images_path_gen)
                 annotations_path = next(terminator_annotations_path_gen)
-                print(image_dataset_size, image_dataset_size)
+                
                 if image_dataset_size != annotations_dataset_size:
                     raise(
                         (
@@ -121,27 +130,27 @@ class TenyksSDK():
                 
                 image_request = Image(
                     name=str(image_path.name),
+                    url=images_path,
                     dataset_name=dataset_name,
-                    url=str(image_path),
                     annotations=Annotations(
-                        bboxes=[BoundingBox(array=bbox) for bbox in bbox_and_categories['bbox']],
-                        categories=[Category(category_id=cat) for cat in bbox_and_categories['category_id']],
+                        bboxes=[bbox for bbox in bbox_and_categories['bbox']],
+                        categories=[cat for cat in bbox_and_categories['category_id']],
                     )
                 )
                 
                 resp = await post_async_request_handler(url=f"{base_url}/images", request=image_request)
-                print('IMAGE POST  ................Complete')
-            except StopIteration:
-                raise
+            except StopIteration as ex:
+                print(ex)
+                return(resp)
             except Exception as ex:
                 print(ex)
-                print('IMAGE POST  ................Failed')
+                print('IMAGES POST  ................Failed')
                 raise
-            return resp
 
-    async def extract(self, extraction_type):
-        print("select")
-        resp = await post_async_request_handler(url=f"{extract_url}/extract", request=TenyksExtractionRequest(type=extraction_type))
+    async def extract(self, dataset_name: str, model_name: str, extraction_type: ExtractionTypes):
+        request=TenyksExtractionRequest(dataset_name=dataset_name, model_name=model_name, type=extraction_type)
+        print(f"{extract_url}/extract")
+        resp = await post_async_request_handler(url=f"{extract_url}/extract", request=request)
         return resp
 
 def load_json(file_path: str) -> dict:
@@ -156,19 +165,19 @@ if __name__ == "__main__":
     # Set inputs (UI Service) ##################################################################
     ############################################################################################
     
-    human_dataset_base_path = "./sdk/dataset_data/human_dataset"
+    human_dataset_base_path = "./data/human_dataset"
     human_annotations_path = f"{human_dataset_base_path}/annotations/"
     human_images_path = f"{human_dataset_base_path}/images/"
 
-    terminator_dataset_base_path = "./sdk/dataset_data/terminator_dataset"
+    terminator_dataset_base_path = "./data/terminator_dataset"
     terminator_annotations_path = f"{terminator_dataset_base_path}/annotations/"
     terminator_images_path = f"{terminator_dataset_base_path}/images/"
     
-    human_annotations_path_gen = os.scandir(human_annotations_path)
-    human_images_path_gen = os.scandir(human_images_path)
+    # human_annotations_path_gen = os.scandir(human_annotations_path)
+    # human_images_path_gen = os.scandir(human_images_path)
 
-    terminator_annotations_path_gen = os.scandir(terminator_annotations_path)
-    terminator_images_path_gen = os.scandir(terminator_images_path)
+    # terminator_annotations_path_gen = os.scandir(terminator_annotations_path)
+    # terminator_images_path_gen = os.scandir(terminator_images_path)
 
     model_id = 0
     dataset_name_human = "human_dataset"
@@ -179,18 +188,25 @@ if __name__ == "__main__":
     # Persist dataset data into DB (BACKEND Service) - IO BOUND, use async #####################
     ############################################################################################
     base_url = "http://backend:8000/api"
-    extract_url = "http://extract:8000/api"
-    dataset_name = 'terminator_dataset'
+    extract_url = "http://extraction:8000/api"
+    dataset_name = dataset_name_human
     dataset_type = 'jpg'
-    dataset_url = human_images_path
-    dataset_size = len(list(os.scandir(dataset_url)))
-    image_dataset_size = len(glob.glob(human_images_path))
-    annotations_dataset_size = len(glob.glob(human_annotations_path))
+    # dataset_url = human_dataset_base_path
+    # dataset_size = len(list(os.scandir(dataset_url)))
+    # image_dataset_size = len(glob.glob(human_images_path))
+    # annotations_dataset_size = len(glob.glob(human_annotations_path))
     
    
 
+    # Initialise Tenyks client 
+    ############################################################################################
     tc = TenyksSDK()
+    
 
+    # Run initial setup scripts to get data from sources and push it to DB in internal format 
+    ############################################################################################
+    
+    # Save dataset
     result = asyncio.run(
         tc.save_dataset(
             name=dataset_name,
@@ -201,27 +217,38 @@ if __name__ == "__main__":
     )
     print(result)
 
-    result = asyncio.run(
-        tc.save_model(name="test_model3", datasets=[dataset_name])
-    )
-    print(result)
-    result = asyncio.run(
-        tc.save_model(name="test_model4", datasets=[dataset_name, "non_existent_dataset"])
-    )
-    print(result)
-    result = asyncio.run(
-        tc.save_images(images_path=human_images_path, annotations_path=human_annotations_path)
-    )
-    print(result)
+    # # Save model
+    # result = asyncio.run(
+    #     tc.save_model(
+    #         name="test_model5",
+    #         datasets=[dataset_name]
+    #     )
+    # )
+    # print(result)
+
+    # # Save all images in dataset
+    # result = asyncio.run(
+    #     tc.save_images(
+    #         images_path=human_images_path,
+    #         annotations_path=human_annotations_path
+    #     )
+    # )
+    # print(result)
 
     # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
     ############################################################################################
 
+    # result = asyncio.run(
+    #     tc.extract(dataset_name=dataset_name, model_name=model_name, extraction_type=ExtractionTypes.HEATMAP)
+    # )
+    # print(result)
 
-    # Save ML outputs internal API format into DB (BACKEND Service) - IO BOUND, use async ######
-    ############################################################################################
-    
-    # print(heatmap)
-    # print(bbox_and_categories)
-    # print(activations)
-    # print(activations_vm.array)
+    # result = asyncio.run(
+    #     tc.extract(extraction_type=ExtractionTypes.ACTIVATIONS)
+    # )
+    # print(result)
+
+    # result = asyncio.run(
+    #     tc.extract(extraction_type=ExtractionTypes.PREDICTIONS)
+    # )
+    # print(result)

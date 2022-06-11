@@ -1,4 +1,4 @@
-from dataclasses import is_dataclass, fields
+from dataclasses import dataclass, is_dataclass, fields
 import pydantic
 from typing import AsyncGenerator, Callable, Type, List, TypeVar
 import asyncpg
@@ -44,7 +44,7 @@ async def typed_fetch(conn: Connection, typ: T, query: str, *args) -> List[T]:
     """Maps all columns of a database record to a Python data class."""
 
     if not is_dataclass(typ):
-        raise TypeError(f"{typ} must be a dataclass type")
+        raise TypeError(f"{typ} must be a dataclass type or List[dataclass] type")
 
     records = await conn.fetch(query, *args)
     return _typed_fetch(typ, records)

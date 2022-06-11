@@ -1,7 +1,9 @@
 
+import json
 from fastapi import APIRouter, Depends
 from typing import List
 
+from shared.types_common import TenyksResponse, TenyksSuccess
 from shared.view_models import Model
 from ..repos.models_repo import ModelsRepository
 from shared.database import get_repository
@@ -12,8 +14,24 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+@router.get("", response_model=TenyksResponse, status_code=200, )
+async def get_all_models(models_repo: ModelsRepository=Depends(get_repository(ModelsRepository))) -> TenyksResponse:
+    """Get a mode based on a known id."""
+
+    dtos = await models_repo.get_all_models()
+    models = [
+        Model(
+            id=int(dto.id),
+            name=dto.name,
+            datasets=["adasd"]
+        )
+        for dto in dtos
+    ]
+    
+    return TenyksResponse(response=TenyksSuccess(result=models))
+
 @router.get("/{model_id}", response_model=Model, status_code=200, )
-async def get_model_by_id(model_id: Model.Key, models_repo: ModelsRepository=Depends(get_repository(ModelsRepository))) -> Model:
+async def get_model_by_id(model_id: int, models_repo: ModelsRepository=Depends(get_repository(ModelsRepository))) -> Model:
     """Get a mode based on a known id."""
 
     dto = await models_repo.get_model_by_id(model_id)
@@ -24,9 +42,7 @@ async def get_model_by_id(model_id: Model.Key, models_repo: ModelsRepository=Dep
 async def get_model_by_name(name: str, models_repo: ModelsRepository=Depends(get_repository(ModelsRepository))) -> Model:
     """"Get a model based on model name."""
 
-    print(name)
     dto = await models_repo.get_model_by_name(name)
-    print(dto)
     model = Model(name=dto.name, datasets=[])
     return model
 

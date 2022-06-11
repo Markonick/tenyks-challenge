@@ -17,9 +17,15 @@ services:
       PSQL_DATABASE: ${PSQL_DATABASE}
       PSQL_SCHEMA: ${PSQL_SCHEMA}
       DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
+      AWS_ACCESS_KEY_ID: admin123
+      AWS_SECRET_ACCESS_KEY: admin123
+      AWS_BUCKET: human_dataset
+      AWS_ENDPOINT: http://minio:9000
     ports:
      - "8001:8000"
     depends_on:
+      minio:
+        condition: service_healthy
       postgres:
         condition: service_healthy
 
@@ -44,14 +50,15 @@ services:
       postgres:
         condition: service_healthy
 
-  ml_extraction:
-    container_name: ml_extraction
+  extraction:
+    container_name: extraction
     build:
       context: .
-      dockerfile: app/ml_extraction/Dockerfile
+      dockerfile: app/extraction/Dockerfile
     volumes:
-      - ./app/ml_extraction:/app/ml_extraction
+      - ./app/extraction:/app/extraction
       - ./app/shared:/app/shared
+      - ./dataset_data:/app/extraction/dataset_data
     environment:
       PSQL_USERNAME: ${PSQL_USERNAME}
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}
@@ -59,9 +66,16 @@ services:
       PSQL_DATABASE: ${PSQL_DATABASE}
       PSQL_SCHEMA: ${PSQL_SCHEMA}
       DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
+      BACKEND_BASE_URL: ${BACKEND_BASE_URL}
+      AWS_ACCESS_KEY_ID: admin123
+      AWS_SECRET_ACCESS_KEY: admin123
+      AWS_BUCKET: human_dataset
+      AWS_ENDPOINT: http://minio:9000
     ports:
      - "8002:8000"
     depends_on:
+      minio:
+        condition: service_healthy
       postgres:
         condition: service_healthy
 
@@ -86,3 +100,26 @@ services:
       POSTGRES_PASSWORD: ${PSQL_PASSWORD}
       PSQL_DATABASE: ${PSQL_DATABASE}
       SCHEMA: ${PSQL_SCHEMA}
+
+  minio:
+    container_name: minio
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: admin123
+      MINIO_ROOT_PASSWORD: admin123
+    volumes:
+      - ./dataset_data:/data
+    ports:
+      - 9000:9000
+      - 9001:9001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://minio:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    command: server /data --console-address :9001  # <-- add this
+
+
+# volumes:
+#   postgres_data:
+#   dataset_data:

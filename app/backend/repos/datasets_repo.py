@@ -13,6 +13,25 @@ class DatasetsRepository(BaseRepository):
     def __init__(self, conn: Connection) -> None:
         super().__init__(conn)
 
+    async def get_all_datasets(self, ) -> List[DatasetDto]:
+        """Get all datasets -- TODO: based on image_type??"""
+        
+        async with self.connection.transaction():
+            query_string = f"""
+                SELECT
+                    ds.id,
+                    ds.dataset_type_id,
+                    ds.dataset_name,
+                    ds.dataset_size,
+                    ds.dataset_url,
+                    ds.images_url
+                FROM tenyks.dataset ds
+            """
+
+            result = await typed_fetch(self.connection, DatasetDto, query_string)
+            
+            return result
+
     async def get_dataset_by_name(self, name: str) -> DatasetDto:
         """Get dataset based on its name"""
         
@@ -23,7 +42,8 @@ class DatasetsRepository(BaseRepository):
                     ds.dataset_type_id,
                     ds.dataset_name,
                     ds.dataset_size,
-                    ds.dataset_url
+                    ds.dataset_url,
+                    ds.images_url
                 FROM tenyks.dataset ds
                 WHERE dataset_name=$1;
             """
@@ -42,7 +62,8 @@ class DatasetsRepository(BaseRepository):
                     ds.dataset_type_id,
                     ds.dataset_name,
                     ds.dataset_size,
-                    ds.dataset_url
+                    ds.dataset_url,
+                    ds.images_url
                 FROM tenyks.dataset ds
                 WHERE id=$1;
             """
@@ -50,7 +71,7 @@ class DatasetsRepository(BaseRepository):
             result = await typed_fetch(self.connection, DatasetDto, query_string, dataset_id)
             return [] if len(result) == 0 else result[0]
 
-    async def create_dataset(self, dataset_type: str, dataset_name: str, dataset_size: int, dataset_url: str,  ) -> None:
+    async def create_dataset(self, dataset_type: str, dataset_name: str, dataset_size: int, dataset_url: str, images_url: str, ) -> None:
         """Create a new dataset"""
 
         async with self.connection.transaction():
@@ -65,11 +86,10 @@ class DatasetsRepository(BaseRepository):
                 get_dataset_type_id_string,
                 dataset_type,
             )
-            print(dataset_type)
-            print(dataset_type_id)
+            
             dataset_insert_query_string = f"""
-                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_size, dataset_url)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_size, dataset_url, images_url)
+                VALUES ($1, $2, $3, $4, $5)
                 RETURNING id;
             """
            
@@ -78,5 +98,6 @@ class DatasetsRepository(BaseRepository):
                 dataset_type_id,
                 dataset_name,
                 dataset_size,
-                dataset_url
+                dataset_url,
+                images_url,
             )

@@ -1,5 +1,6 @@
 import dataclasses
 import json
+from typing import Any
 import httpx
 from dataclasses import dataclass
 from fastapi import Response
@@ -7,8 +8,7 @@ from fastapi import Response
 
 async def get_async_request_handler(url, request: dataclass) -> dict:
     headers = {"content-type": "application/json"}
-    data = json.dumps(dataclass.asdict(request))
-  
+    data = json.dumps(dataclasses.asdict(request))
     async with httpx.AsyncClient() as client:
         response = await client.get(url=url, headers=headers, params=data)
         try:
@@ -21,7 +21,7 @@ async def get_async_request_handler(url, request: dataclass) -> dict:
 async def post_async_request_handler(url, request: dataclass) -> dict:
     headers = {"content-type": "application/json"}
     data = json.dumps(dataclasses.asdict(request))
-
+    
     async with httpx.AsyncClient() as client:
         response = await client.post(url=url, headers=headers, data=data)
         try:

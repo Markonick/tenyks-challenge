@@ -22,6 +22,11 @@ class DummyModel:
         # Dummy heatmap generation
         # A heatmap is represented as a numpy array of shape (H * W), where H and W are the image height and width
         # The values represent the heatmap intensities
+        print(img_path)
+        print(img_path)
+        print(img_path)
+        print(img_path)
+        print(img_path)
         np_img = np.asarray(Image.open(img_path))
         h, w = np_img.shape[0], np_img.shape[1]
         # Values are generated randomly for the dummy models

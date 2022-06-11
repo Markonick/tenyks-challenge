@@ -10,19 +10,18 @@ import numpy as np
 class Dataset:
     """Information about each dataset as a whole"""
     
-    Key = int
-
+    id: int
     name: str
     size: int
     type: str
-    url: str
+    dataset_url: str
+    images_url: str
 
 @dataclass
 class Model:
     """Information about each model as a whole"""
 
-    Key = int
-
+    id: int
     name: str
     datasets: List[str]
     
@@ -42,8 +41,8 @@ class Category:
 class Annotations:
     """Representation of annotations"""
 
-    bboxes: List[BoundingBox]
-    categories: List[Category]
+    bboxes: List[List[int]]
+    categories: List[int]
 
 @dataclass
 class Heatmap:
@@ -63,6 +62,7 @@ class Activations:
 class Image:
     """Information about each image"""
     
+    id: int
     name: str
     url: str
     dataset_name: str

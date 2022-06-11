@@ -5,8 +5,9 @@ pytest-asyncio
 pydantic
 httpx
 numpy
-fastapi[all]==0.70.1
+fastapi[all]
 Pillow
 requests
 watchgod
 httpx
+aioboto3

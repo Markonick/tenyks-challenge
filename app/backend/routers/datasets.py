@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import json
 from fastapi import APIRouter, Depends
 from typing import List
@@ -15,19 +16,39 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+@router.get("", response_model=TenyksResponse, status_code=200, )
+async def get_all_datasets(datasets_repo: DatasetsRepository=Depends(get_repository(DatasetsRepository))) -> TenyksResponse:
+    """Get a dataset based on a known dataset id."""
+
+    dtos = await datasets_repo.get_all_datasets()
+    
+    datasets = [
+        Dataset(
+            id=int(dto.id),
+            name=dto.dataset_name,
+            size=dto.dataset_size,
+            type=dto.dataset_type_id,
+            dataset_url=dto.dataset_url,
+            images_url=dto.images_url,
+        )
+        for dto in dtos
+    ]
+    
+    return TenyksResponse(response=TenyksSuccess(result=datasets))
+
 @router.get("/{dataset_id}", response_model=TenyksResponse, status_code=200, )
-async def get_dataset_by_id(dataset_id: Dataset.Key, datasets_repo: DatasetsRepository=Depends(get_repository(DatasetsRepository))) -> Dataset:
+async def get_dataset_by_id(dataset_id: int, datasets_repo: DatasetsRepository=Depends(get_repository(DatasetsRepository))) -> Dataset:
     """Get a dataset based on a known dataset id."""
 
     dto = await datasets_repo.get_dataset_by_id(int(dataset_id))
     dataset = Dataset(
-        id=dto.id,
+        id=int(dto.id),
         name=dto.dataset_name,
         size=dto.dataset_size,
         type=dto.dataset_type_id,
-        url=dto.dataset_url
+        dataset_url=dto.dataset_url,
+        images_url=dto.images_url,
     )
-    
     return dataset
 
 @router.get("", response_model=TenyksResponse, status_code=200, )
@@ -45,10 +66,12 @@ async def get_dataset_by_name(name: str, datasets_repo: DatasetsRepository=Depen
             )
         else:
             dataset = Dataset(
+                id=int(dto.id),
                 name=dto.dataset_name,
                 size=dto.dataset_size,
                 type=dto.dataset_type_id,
-                url=dto.dataset_url
+                dataset_url=dto.dataset_url,
+                images_url=dto.images_url,
             )
     except Exception as e:
         content = f"exception: {e}"
@@ -78,13 +101,15 @@ async def post_dataset(
     dataset_type = dataset.type
     dataset_name = dataset.name
     dataset_size = int(dataset.size)
-    dataset_url = dataset.url
-
+    dataset_url = dataset.dataset_url
+    images_url = dataset.images_url
+    
     dataset = await datasets_repo.create_dataset(
         dataset_type=dataset_type,
         dataset_name=dataset_name,
         dataset_size=dataset_size,
-        dataset_url=dataset_url
+        dataset_url=dataset_url,
+        images_url=images_url,
     )
     
     return dataset

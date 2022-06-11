@@ -14,11 +14,15 @@ class StatusGroup(str, Enum):
     INTERNAL_ERROR = "internal_error"
     TEMPORARY_ERROR = "temporary_error"
 
+@unique
+class ExtractionTypes(str, Enum):
+    HEATMAP = "heatmap"
+    ACTIVATIONS = "activations"
+    PREDICTIONS = "predictions"
 
 class TenyksSuccess(GenericModel, Generic[ResponseT]):
     result: ResponseT
     type: StatusGroup = StatusGroup.SUCCESS
-
 
 @dataclass
 class TenyksError:
@@ -27,8 +31,22 @@ class TenyksError:
     
 @dataclass
 class TenyksExtractionRequest:
-    type: str
+    dataset_name: str
+    model_name: str
+    type: ExtractionTypes
     
+@dataclass
+class TenyksDatasetsRequest:
+    dataset_name: str
+
+@dataclass
+class TenyksModelsRequest:
+    model_name: str
+   
+@dataclass 
+class TenyksImagesRequest:
+    dataset_id: int
+
 class TenyksResponse(GenericModel, Generic[ResponseT]):
     response: Union[TenyksSuccess[ResponseT], TenyksError]
 

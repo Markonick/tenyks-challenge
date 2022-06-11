@@ -14,6 +14,30 @@ class ImagesRepository(BaseRepository):
     def __init__(self, conn: Connection) -> None:
         super().__init__(conn)
 
+    async def get_all_images(self, dataset_id: int) -> List[ImageDto]:
+        """Get image based on its id"""
+        
+        async with self.connection.transaction():
+            query_string = f"""
+                SELECT
+                    im.id,
+                    im.name,
+                    im.dataset_id,
+                    ARRAY_AGG(bbox_json) bboxes,
+                    ARRAY_AGG(category) categories,
+                    d.images_url,
+                    d.dataset_name
+                FROM tenyks.image im
+                JOIN tenyks.dataset d ON im.dataset_id=d.id
+                JOIN tenyks.image_bbox ib ON im.id=ib.image_id
+                JOIN tenyks.image_category ic ON ib.category_id =ic.id 
+                WHERE im.dataset_id=$1
+                GROUP by
+                    im.id,d.images_url,d.dataset_name, im.name;
+            """
+            image = await typed_fetch(self.connection, ImageDto, query_string, dataset_id)
+            return image
+            
     async def get_image_by_id(self, image_id: int) -> ImageDto:
         """Get image based on its id"""
         
@@ -56,12 +80,12 @@ class ImagesRepository(BaseRepository):
             image = await typed_fetch(self.connection, ImageDto, query_string, image_id, model_id)
             return image
 
-    async def create_image(self, name: str, dataset_name: str, annotations: Annotations, url: str ) -> ImageDto:
+    async def create_image(self, name: str, dataset_name: str, annotations: Annotations) -> ImageDto:
         """Create a new image"""
 
         bboxes = [bbox.array for bbox in annotations.bboxes]
         categories = [cat.category_id for cat in annotations.categories]
-
+        
         async with self.connection.transaction():
             get_dataset_id_string = f"""
                 SELECT 
@@ -76,7 +100,7 @@ class ImagesRepository(BaseRepository):
             )
 
             image_insert_query_string = f"""
-                INSERT INTO tenyks.image(dataset_id, image_url)
+                INSERT INTO tenyks.image(dataset_id, name)
                 VALUES ($1, $2)
                 RETURNING id;
             """
@@ -84,7 +108,7 @@ class ImagesRepository(BaseRepository):
             image_id = await self.connection.fetchval(
                 image_insert_query_string,
                 dataset_id,
-                url
+                name
             )
 
             category_insert_query_string = f"""
