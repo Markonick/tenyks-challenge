@@ -12,8 +12,8 @@ class DatasetDto:
     dataset_type_id: int
     dataset_name: str
     dataset_size: int
-    dataset_url: str
-    images_url: str
+    dataset_path: str
+    images_path: str
 
 @dataclass
 class ModelDto:
@@ -24,8 +24,8 @@ class ModelDto:
     dataset_type_id: int            
     dataset_name: str
     dataset_size: int
-    dataset_url: str
-    images_url: str
+    dataset_path: str
+    images_path: str
     
 @dataclass
 class ImageDto:
@@ -36,5 +36,5 @@ class ImageDto:
     dataset_id: int
     bboxes: List[BoundingBox]
     categories: List[Category]
-    images_url: str
+    images_pathl: str
     dataset_name: str

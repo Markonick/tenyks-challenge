@@ -16,11 +16,14 @@ services:
       PSQL_PASSWORD: ${PSQL_PASSWORD}
       PSQL_DATABASE: ${PSQL_DATABASE}
       PSQL_SCHEMA: ${PSQL_SCHEMA}
+      BACKEND_BASE_URL: ${BACKEND_BASE_URL}
+      EXTRACT_BASE_URL: ${EXTRACT_BASE_URL}
       DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
-      AWS_ACCESS_KEY_ID: admin123
-      AWS_SECRET_ACCESS_KEY: admin123
-      AWS_BUCKET: human_dataset
-      AWS_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      AWS_BUCKET: ${AWS_BUCKET}
+      AWS_ENDPOINT: ${AWS_ENDPOINT}
+
     ports:
      - "8001:8000"
     depends_on:
@@ -67,10 +70,10 @@ services:
       PSQL_SCHEMA: ${PSQL_SCHEMA}
       DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
       BACKEND_BASE_URL: ${BACKEND_BASE_URL}
-      AWS_ACCESS_KEY_ID: admin123
-      AWS_SECRET_ACCESS_KEY: admin123
-      AWS_BUCKET: human_dataset
-      AWS_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      AWS_BUCKET: ${AWS_BUCKET}
+      AWS_ENDPOINT: ${AWS_ENDPOINT}
     ports:
      - "8002:8000"
     depends_on:
@@ -103,22 +106,36 @@ services:
 
   minio:
     container_name: minio
-    image: minio/minio:latest
-    environment:
-      MINIO_ROOT_USER: admin123
-      MINIO_ROOT_PASSWORD: admin123
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - ./dataset_data:/data
-    ports:
-      - 9000:9000
-      - 9001:9001
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address :9001  # <-- add this
     healthcheck:
       test: ["CMD", "curl", "-f", "http://minio:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
-    command: server /data --console-address :9001  # <-- add this
 
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    volumes:
+      - ./dataset_data:/data
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set test http://minio:9000 minio minio123;
+      /usr/bin/mc mb test/testbucket --region=us-east-1;
+      /usr/bin/mc cp --recursive /data/ test/testbucket/;
+      /usr/bin/mc policy set public test/testbucket;
+      exit 0;
+      "
 
 # volumes:
 #   postgres_data:

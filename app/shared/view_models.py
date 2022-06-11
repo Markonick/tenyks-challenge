@@ -10,18 +10,18 @@ import numpy as np
 class Dataset:
     """Information about each dataset as a whole"""
     
-    id: int
+    # id: int
     name: str
     size: int
     type: str
-    dataset_url: str
-    images_url: str
+    dataset_path: str
+    images_path: str
 
 @dataclass
 class Model:
     """Information about each model as a whole"""
 
-    id: int
+    # id: int
     name: str
     datasets: List[str]
     

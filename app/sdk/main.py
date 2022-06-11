@@ -1,10 +1,12 @@
 import asyncio
+import dataclasses
+from re import S
 import aioboto3
 from dataclasses import dataclass
 from email.generator import Generator
 import glob
 import os, json
-from typing import List
+from typing import List, Optional
 from shared.types_common import ExtractionTypes, TenyksExtractionRequest
 
 from shared.request_handlers import get_async_request_handler, post_async_request_handler
@@ -35,73 +37,100 @@ There are multiple possibilities for the input:
 Also we must consider being extensible as in the future we might add more metadata at the extraction stage
 """
 
+
+@dataclass
+class AwsConfig:
+    endpoint_url: str
+    region_name: str
+    aws_access_key_id: str
+    aws_secret_access_key: str
+
+
 @dataclass
 class DatasetGetRequest:
     name: str
+
 
 @dataclass
 class ModelGetRequest:
     name: str
 
+
 class TenyksSDK():
     def __init__(self,) -> None:
-        pass
+        self._awsConfig = AwsConfig(
+            endpoint_url=os.environ.get("AWS_ENDPOINT"),
+            region_name=os.environ.get("AWS_REGION"),
+            aws_access_key_id=os.environ.get("MINIO_ROOT_USER"),
+            aws_secret_access_key=os.environ.get("MINIO_ROOT_PASSWORD"),
+        )
+        
+        self._backend_base_url = os.environ.get("BACKEND_BASE_URL")
+        self.extract_base_url = os.environ.get("EXTRACT_BASE_URL")
+        
+    async def _s3_file_count(self, files_path: str, file_type: str) -> str:
+        totalCount = 0
+      
+        bucket = os.environ.get("AWS_BUCKET")
+        session = aioboto3.Session()
+        async with session.resource("s3", **dataclasses.asdict(self._awsConfig)) as s3:
+            bucket = await s3.Bucket(bucket)  
+            async for s3_object in bucket.objects.filter(Prefix=files_path):
+                if s3_object.key.split(".")[-1] == file_type:
+                    totalCount += 1
+            
+        return totalCount
+            
+    async def _s3_reader(self, files_path: str, file_type: str) -> str:
+        bucket = os.environ.get("AWS_BUCKET")
+        session = aioboto3.Session()
+        async with session.resource("s3", **dataclasses.asdict(self._awsConfig)) as s3:
+            bucket = await s3.Bucket(bucket)     
+            async for s3_object in bucket.objects.filter(Prefix=files_path):
+                if s3_object.key.split(".")[-1] == file_type:
+                    yield s3_object.key
 
-    @property
     async def dataset(self, name: str) -> Model:
 
         dataset_request = DatasetGetRequest(name=name)
-        resp = await get_async_request_handler(url=f"{base_url}/datasets", request=dataset_request)
+        resp = await get_async_request_handler(url=f"{self._backend_base_url}/datasets", request=dataset_request)
   
         return resp
 
-    async def save_dataset(self, name: str, images_path: str, annotations_path: str, dataset_path: str):
+    async def save_dataset(self, name: str, dataset_path: str, images_path: str, annotations_path: Optional[str]=None, ):
 
-        session = aioboto3.Session()
-        async with session.resource("s3") as s3:
-            bucket = await s3.Bucket('dataset')  # <----------------
-            async for s3_object in bucket.objects.all():
-                print(s3_object)
-
-        annotations_dataset_size = len(glob.glob(annotations_path))
-        images_path_gen = os.scandir(images_path)
-        image_path = next(images_path_gen).name
         # Assumption/Trade-off (could be wrong): All image types within a dataset are of a single type eg. jpg
-       
-        dataset_type = str(image_path).split(".")[-1]
-        
+        dataset_type = str(images_path).split(".")[-1]
+        size = await self._s3_file_count(files_path=images_path, file_type=dataset_type) 
+
         dataset_request = Dataset(
             name=name,
-            size=annotations_dataset_size,
+            size=size,
             type=dataset_type,
-            dataset_url=dataset_path,
-            images_url=images_path,
+            dataset_path=dataset_path,
+            images_path=images_path,
         )
-        resp = await post_async_request_handler(url=f"{base_url}/datasets", request=dataset_request)
-
+        resp = await post_async_request_handler(url=f"{self._backend_base_url}/datasets", request=dataset_request)
+        print(resp)
         return resp
 
-    @property
     async def model(self, name: str) -> Model:
         model_request = ModelGetRequest(name=name)
-        resp = await get_async_request_handler(url=f"{base_url}/models", request=model_request)
+        resp = await get_async_request_handler(url=f"{self._backend_base_url}/models", request=model_request)
 
         return resp
 
     async def save_model(self, name: str, datasets: List[str]):
         model_request = Model(name=name, datasets=datasets)
-        resp = await post_async_request_handler(url=f"{base_url}/models", request=model_request)
+        resp = await post_async_request_handler(url=f"{self._backend_base_url}/models", request=model_request)
         return resp
         
-    @property
     def image(self) -> Image:
         return self._image
 
-    @image.setter
     def image(self, value: Image):
         self._image = value
 
-    @property
     def images(self) -> Image:
         return self._image
 
@@ -111,7 +140,11 @@ class TenyksSDK():
         images_path_gen = os.scandir(images_path)
         image_dataset_size = len(glob.glob(images_path))
         annotations_dataset_size = len(glob.glob(annotations_path))
-
+        try:
+            async for i in self._s3_reader(files_path=images_path, file_type='jpg'):
+                continue
+        except StopAsyncIteration:
+            print('YO!')
         while True:
             try:
             
@@ -138,7 +171,7 @@ class TenyksSDK():
                     )
                 )
                 
-                resp = await post_async_request_handler(url=f"{base_url}/images", request=image_request)
+                resp = await post_async_request_handler(url=f"{backend_base_url}/images", request=image_request)
             except StopIteration as ex:
                 print(ex)
                 return(resp)
@@ -149,8 +182,8 @@ class TenyksSDK():
 
     async def extract(self, dataset_name: str, model_name: str, extraction_type: ExtractionTypes):
         request=TenyksExtractionRequest(dataset_name=dataset_name, model_name=model_name, type=extraction_type)
-        print(f"{extract_url}/extract")
-        resp = await post_async_request_handler(url=f"{extract_url}/extract", request=request)
+        print(f"{extract_base_url}/extract")
+        resp = await post_async_request_handler(url=f"{extract_base_url}/extract", request=request)
         return resp
 
 def load_json(file_path: str) -> dict:
@@ -162,42 +195,6 @@ def load_json(file_path: str) -> dict:
 
 if __name__ == "__main__":
     
-    # Set inputs (UI Service) ##################################################################
-    ############################################################################################
-    
-    human_dataset_base_path = "./data/human_dataset"
-    human_annotations_path = f"{human_dataset_base_path}/annotations/"
-    human_images_path = f"{human_dataset_base_path}/images/"
-
-    terminator_dataset_base_path = "./data/terminator_dataset"
-    terminator_annotations_path = f"{terminator_dataset_base_path}/annotations/"
-    terminator_images_path = f"{terminator_dataset_base_path}/images/"
-    
-    # human_annotations_path_gen = os.scandir(human_annotations_path)
-    # human_images_path_gen = os.scandir(human_images_path)
-
-    # terminator_annotations_path_gen = os.scandir(terminator_annotations_path)
-    # terminator_images_path_gen = os.scandir(terminator_images_path)
-
-    model_id = 0
-    dataset_name_human = "human_dataset"
-    dataset_name_terminator = "terminator_dataset"
-    model_name = "Humanoid Model"
-
-    
-    # Persist dataset data into DB (BACKEND Service) - IO BOUND, use async #####################
-    ############################################################################################
-    base_url = "http://backend:8000/api"
-    extract_url = "http://extraction:8000/api"
-    dataset_name = dataset_name_human
-    dataset_type = 'jpg'
-    # dataset_url = human_dataset_base_path
-    # dataset_size = len(list(os.scandir(dataset_url)))
-    # image_dataset_size = len(glob.glob(human_images_path))
-    # annotations_dataset_size = len(glob.glob(human_annotations_path))
-    
-   
-
     # Initialise Tenyks client 
     ############################################################################################
     tc = TenyksSDK()
@@ -206,25 +203,40 @@ if __name__ == "__main__":
     # Run initial setup scripts to get data from sources and push it to DB in internal format 
     ############################################################################################
     
-    # Save dataset
+    # Save dataset 1
+    dataset_name = "human_dataset"
+    human_dataset_base_path = "human_dataset"
+    human_images_path = f"{human_dataset_base_path}/images"
     result = asyncio.run(
         tc.save_dataset(
             name=dataset_name,
+            dataset_path=human_dataset_base_path,
             images_path=human_images_path,
-            annotations_path=human_annotations_path,
-            dataset_path=human_dataset_base_path
         )
     )
-    print(result)
 
-    # # Save model
+    # Save dataset 2
+    # dataset_name = "terminator_dataset"
+    # terminator_dataset_base_path = "terminator_dataset"
+    # terminator_images_path = f"{terminator_dataset_base_path}/images"
     # result = asyncio.run(
-    #     tc.save_model(
-    #         name="test_model5",
-    #         datasets=[dataset_name]
+    #     tc.save_dataset(
+    #         name=dataset_name,
+    #         dataset_path=terminator_dataset_base_path,
+    #         images_path=terminator_images_path,
     #     )
     # )
-    # print(result)
+
+    # Save model
+    # model_name = "Humanoid Model 2"
+    # dataset1_name = "humanoid_datset"
+    # dataset2_name = "vulcans_dataset"
+    # result = asyncio.run(
+    #     tc.save_model(
+    #         name=model_name,
+    #         datasets=[dataset1_name, dataset2_name]
+    #     )
+    # )
 
     # # Save all images in dataset
     # result = asyncio.run(

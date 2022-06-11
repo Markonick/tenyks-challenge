@@ -23,8 +23,8 @@ class DatasetsRepository(BaseRepository):
                     ds.dataset_type_id,
                     ds.dataset_name,
                     ds.dataset_size,
-                    ds.dataset_url,
-                    ds.images_url
+                    ds.dataset_path,
+                    ds.images_path
                 FROM tenyks.dataset ds
             """
 
@@ -42,8 +42,8 @@ class DatasetsRepository(BaseRepository):
                     ds.dataset_type_id,
                     ds.dataset_name,
                     ds.dataset_size,
-                    ds.dataset_url,
-                    ds.images_url
+                    ds.dataset_path,
+                    ds.images_path
                 FROM tenyks.dataset ds
                 WHERE dataset_name=$1;
             """
@@ -62,8 +62,8 @@ class DatasetsRepository(BaseRepository):
                     ds.dataset_type_id,
                     ds.dataset_name,
                     ds.dataset_size,
-                    ds.dataset_url,
-                    ds.images_url
+                    ds.dataset_path,
+                    ds.images_path
                 FROM tenyks.dataset ds
                 WHERE id=$1;
             """
@@ -71,7 +71,7 @@ class DatasetsRepository(BaseRepository):
             result = await typed_fetch(self.connection, DatasetDto, query_string, dataset_id)
             return [] if len(result) == 0 else result[0]
 
-    async def create_dataset(self, dataset_type: str, dataset_name: str, dataset_size: int, dataset_url: str, images_url: str, ) -> None:
+    async def create_dataset(self, dataset_type: str, dataset_name: str, dataset_size: int, dataset_path: str, images_path: str, ) -> None:
         """Create a new dataset"""
 
         async with self.connection.transaction():
@@ -88,7 +88,7 @@ class DatasetsRepository(BaseRepository):
             )
             
             dataset_insert_query_string = f"""
-                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_size, dataset_url, images_url)
+                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_size, dataset_path, images_path)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id;
             """
@@ -98,6 +98,6 @@ class DatasetsRepository(BaseRepository):
                 dataset_type_id,
                 dataset_name,
                 dataset_size,
-                dataset_url,
-                images_url,
+                dataset_path,
+                images_path,
             )

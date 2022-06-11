@@ -28,8 +28,8 @@ async def get_all_datasets(datasets_repo: DatasetsRepository=Depends(get_reposit
             name=dto.dataset_name,
             size=dto.dataset_size,
             type=dto.dataset_type_id,
-            dataset_url=dto.dataset_url,
-            images_url=dto.images_url,
+            dataset_path=dto.dataset_path,
+            images_path=dto.images_path,
         )
         for dto in dtos
     ]
@@ -46,8 +46,8 @@ async def get_dataset_by_id(dataset_id: int, datasets_repo: DatasetsRepository=D
         name=dto.dataset_name,
         size=dto.dataset_size,
         type=dto.dataset_type_id,
-        dataset_url=dto.dataset_url,
-        images_url=dto.images_url,
+        dataset_path=dto.dataset_path,
+        images_path=dto.images_path,
     )
     return dataset
 
@@ -70,8 +70,8 @@ async def get_dataset_by_name(name: str, datasets_repo: DatasetsRepository=Depen
                 name=dto.dataset_name,
                 size=dto.dataset_size,
                 type=dto.dataset_type_id,
-                dataset_url=dto.dataset_url,
-                images_url=dto.images_url,
+                dataset_path=dto.dataset_path,
+                images_path=dto.images_path,
             )
     except Exception as e:
         content = f"exception: {e}"
@@ -101,15 +101,15 @@ async def post_dataset(
     dataset_type = dataset.type
     dataset_name = dataset.name
     dataset_size = int(dataset.size)
-    dataset_url = dataset.dataset_url
-    images_url = dataset.images_url
+    dataset_path = dataset.dataset_path
+    images_path = dataset.images_path
     
     dataset = await datasets_repo.create_dataset(
         dataset_type=dataset_type,
         dataset_name=dataset_name,
         dataset_size=dataset_size,
-        dataset_url=dataset_url,
-        images_url=images_url,
+        dataset_path=dataset_path,
+        images_path=images_path,
     )
     
     return dataset

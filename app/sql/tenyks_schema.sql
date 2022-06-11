@@ -26,10 +26,10 @@ CREATE TABLE IF NOT EXISTS tenyks.dataset (
     dataset_type_id INT NOT NULL,
     dataset_name VARCHAR(64) NOT NULL,
     dataset_size INT NOT NULL,
-    dataset_url VARCHAR(1024) NOT NULL,
-    images_url VARCHAR(1024) NOT NULL,
+    dataset_path VARCHAR(1024) NOT NULL,
+    images_path VARCHAR(1024) NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE (dataset_name, dataset_url),
+    UNIQUE (dataset_name, dataset_path),
     CONSTRAINT fk_tenyks_dataset_dataset_type FOREIGN KEY (dataset_type_id) REFERENCES tenyks.dataset_type(id)
 );
 

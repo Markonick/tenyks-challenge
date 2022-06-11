@@ -31,7 +31,7 @@ async def get_all_images(
         Image(
             id=dto.id,
             name=dto.name,
-            url=dto.images_url,
+            url=dto.images_path,
             dataset_name=dto.dataset_name,
             annotations=Annotations(
                 bboxes=[json.loads(bbox) for bbox in dto.bboxes],

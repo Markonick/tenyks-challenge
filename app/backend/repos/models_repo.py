@@ -24,8 +24,8 @@ class ModelsRepository(BaseRepository):
                     d.dataset_type_id,
                     d.dataset_name,
                     d.dataset_size,
-                    d.dataset_url,
-                    d.images_url
+                    d.dataset_path,
+                    d.images_path
                 FROM tenyks.model mo
                 JOIN tenyks.model_dataset md on mo.id = md.model_id
                 JOIN tenyks.dataset d on md.dataset_id = d.id
@@ -45,8 +45,8 @@ class ModelsRepository(BaseRepository):
                     d.dataset_type_id,
                     d.dataset_name,
                     d.dataset_size,
-                    d.dataset_url,
-                    d.images_url
+                    d.dataset_path,
+                    d.images_path
                 FROM tenyks.model mo
                 JOIN tenyks.model_dataset md on mo.id = md.model_id
                 JOIN tenyks.dataset d on md.dataset_id = d.id
@@ -67,8 +67,8 @@ class ModelsRepository(BaseRepository):
                     d.dataset_type_id,
                     d.dataset_name,
                     d.dataset_size,
-                    d.dataset_url,
-                    d.images_url
+                    d.dataset_path,
+                    d.images_path
                 FROM tenyks.model mo
                 JOIN tenyks.model_dataset md on mo.id = md.model_id
                 JOIN tenyks.dataset d on md.dataset_id = d.id

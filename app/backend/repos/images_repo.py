@@ -25,7 +25,7 @@ class ImagesRepository(BaseRepository):
                     im.dataset_id,
                     ARRAY_AGG(bbox_json) bboxes,
                     ARRAY_AGG(category) categories,
-                    d.images_url,
+                    d.images_path,
                     d.dataset_name
                 FROM tenyks.image im
                 JOIN tenyks.dataset d ON im.dataset_id=d.id
@@ -33,7 +33,7 @@ class ImagesRepository(BaseRepository):
                 JOIN tenyks.image_category ic ON ib.category_id =ic.id 
                 WHERE im.dataset_id=$1
                 GROUP by
-                    im.id,d.images_url,d.dataset_name, im.name;
+                    im.id,d.images_path,d.dataset_name, im.name;
             """
             image = await typed_fetch(self.connection, ImageDto, query_string, dataset_id)
             return image
@@ -46,7 +46,7 @@ class ImagesRepository(BaseRepository):
                 SELECT
                     im.id as image_id,
                     im.dataset_id,
-                    im.image_url,
+                    im.image_path,
                     ib.bbox_json,
                     ic.category_json
                 FROM tenyks.image im
@@ -65,7 +65,7 @@ class ImagesRepository(BaseRepository):
                 SELECT
                     im.id as image_id,
                     im.dataset_id,
-                    im.image_url,
+                    im.image_path,
                     ib.bbox_json,
                     ic.category_json
                 FROM tenyks.image im
@@ -139,7 +139,7 @@ class ImagesRepository(BaseRepository):
             )
             for i, category_id in enumerate(category_ids)]
 
-    async def create_model_image(self, dataset_type: str, dataset_name: str, dataset_url: str, dataset_size: int, ) -> None:
+    async def create_model_image(self, dataset_type: str, dataset_name: str, dataset_path: str, dataset_size: int, ) -> None:
         """Create a new image"""
 
         async with self.connection.transaction():
@@ -157,7 +157,7 @@ class ImagesRepository(BaseRepository):
             )
 
             dataset_insert_query_string = f"""
-                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_url, dataset_size)
+                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_path, dataset_size)
                 VALUES ($1, $2, $3, $4)
                 RETURNING id;
             """
@@ -166,5 +166,5 @@ class ImagesRepository(BaseRepository):
                 dataset_insert_query_string,
                 dataset_type_id,
                 dataset_name,
-                dataset_url,
+                dataset_path,
             )
