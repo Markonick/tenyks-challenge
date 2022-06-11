@@ -98,9 +98,15 @@ class TenyksSDK():
         return resp
 
     async def save_dataset(self, name: str, dataset_path: str, images_path: str, annotations_path: Optional[str]=None, ):
-
+        try:
+            async for image in self._s3_reader(files_path=images_path, file_type='jpg'):
+                dataset_type = str(image).split(".")[-1]
+                break
+        except Exception as e:
+            print(e)
         # Assumption/Trade-off (could be wrong): All image types within a dataset are of a single type eg. jpg
-        dataset_type = str(images_path).split(".")[-1]
+        # dataset_type = str(images_path).split(".")[-1]
+      
         size = await self._s3_file_count(files_path=images_path, file_type=dataset_type) 
 
         dataset_request = Dataset(
@@ -198,7 +204,6 @@ if __name__ == "__main__":
     # Initialise Tenyks client 
     ############################################################################################
     tc = TenyksSDK()
-    
 
     # Run initial setup scripts to get data from sources and push it to DB in internal format 
     ############################################################################################
@@ -216,36 +221,39 @@ if __name__ == "__main__":
     )
 
     # Save dataset 2
-    # dataset_name = "terminator_dataset"
-    # terminator_dataset_base_path = "terminator_dataset"
-    # terminator_images_path = f"{terminator_dataset_base_path}/images"
-    # result = asyncio.run(
-    #     tc.save_dataset(
-    #         name=dataset_name,
-    #         dataset_path=terminator_dataset_base_path,
-    #         images_path=terminator_images_path,
-    #     )
-    # )
+    dataset_name = "terminator_dataset"
+    terminator_dataset_base_path = "terminator_dataset"
+    terminator_images_path = f"{terminator_dataset_base_path}/images"
+    result = asyncio.run(
+        tc.save_dataset(
+            name=dataset_name,
+            dataset_path=terminator_dataset_base_path,
+            images_path=terminator_images_path,
+        )
+    )
 
     # Save model
-    # model_name = "Humanoid Model 2"
-    # dataset1_name = "humanoid_datset"
-    # dataset2_name = "vulcans_dataset"
-    # result = asyncio.run(
-    #     tc.save_model(
-    #         name=model_name,
-    #         datasets=[dataset1_name, dataset2_name]
-    #     )
-    # )
+    model_name = "Humanoid Model 2"
+    dataset1_name = "humanoid_datset"
+    dataset2_name = "vulcans_dataset"
+    result = asyncio.run(
+        tc.save_model(
+            name=model_name,
+            datasets=[dataset1_name, dataset2_name]
+        )
+    )
 
-    # # Save all images in dataset
-    # result = asyncio.run(
-    #     tc.save_images(
-    #         images_path=human_images_path,
-    #         annotations_path=human_annotations_path
-    #     )
-    # )
-    # print(result)
+    # Save all images in dataset
+    dataset_name = "human_dataset"
+    human_dataset_base_path = "human_dataset"
+    human_images_path = f"{human_dataset_base_path}/images"
+    human_annotations_path = f"{human_dataset_base_path}/annotations"
+    result = asyncio.run(
+        tc.save_images(
+            images_path=human_images_path,
+            annotations_path=human_annotations_path
+        )
+    )
 
     # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
     ############################################################################################

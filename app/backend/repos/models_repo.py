@@ -87,12 +87,18 @@ class ModelsRepository(BaseRepository):
                 VALUES ($1)
                 RETURNING id;
             """
-            
+
             model_id = await self.connection.fetchval(
                 model_insert_query_string,
                 name,
             )
             
+            print(model_id)
+            print(model_id)
+            print(model_id)
+            print(model_id)
+            print(model_id)
+            print(model_id)
             get_dataset_id_query_string = f"""
                 SELECT 
                     ds.id 
@@ -106,7 +112,7 @@ class ModelsRepository(BaseRepository):
                 ) 
                 for dataset in datasets
             ]
-
+            print(datasets)
             model_dataset_insert_query_string = f"""
                 INSERT INTO tenyks.model_dataset(model_id, dataset_id)
                 VALUES ($1, $2);
