@@ -85,10 +85,6 @@ class ImagesRepository(BaseRepository):
         name: str,
         dataset_name: str,
         annotations: Annotations,
-        model_annotations: Optional[Annotations] = None,
-        model_categories: Optional[List[Category]] = None,
-        model_heatmap: Optional[str] = None,
-        model_activations: Optional[str] = None,
     ) -> ImageDto:
         """Create a new image"""
 
@@ -149,31 +145,36 @@ class ImagesRepository(BaseRepository):
             for i, category_id in enumerate(category_ids)]
 
     async def create_model_image(self, dataset_type: str, dataset_name: str, dataset_path: str, dataset_size: int, ) -> None:
-        """Create a new image"""
+        """Create image model based features"""
 
-        async with self.connection.transaction():
-            get_dataset_type_id_string = f"""
-                SELECT 
-                    dataset_type_id 
-                FROM tenyks.dataset ds
-                JOIN tenyks.dataset_type dst ON ds.dataset_type_id = dst.id
-                WHERE name=$1;
-            """
-            
-            dataset_type_id = await self.connection.fetch(
-                get_dataset_type_id_string,
-                dataset_type,
-            )
+      
+        bboxes = [bbox for bbox in model_annotations.bboxes]
+        categories = [cat for cat in model_annotations.categories]
 
-            dataset_insert_query_string = f"""
-                INSERT INTO tenyks.dataset(dataset_type_id, dataset_name, dataset_path, dataset_size)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id;
-            """
-                
-            result = await self.connection.fetch(
-                dataset_insert_query_string,
-                dataset_type_id,
-                dataset_name,
-                dataset_path,
+        category_insert_query_string = f"""
+            INSERT INTO tenyks.model_image_category(category)
+            VALUES ($1)
+            RETURNING id;
+        """
+        category_ids = [ 
+            await self.connection.fetchval(
+                category_insert_query_string,
+                category
             )
+            for category in categories
+        ]
+
+        image_bbox_insert_query_string = f"""
+            INSERT INTO tenyks.model_image_bbox(image_id, category_id, bbox_json)
+            VALUES ($1, $2, $3)
+            RETURNING id;
+        """
+        
+        result = [
+            await self.connection.fetchval(
+                image_bbox_insert_query_string,
+                image_id,
+                category_id,
+                json.dumps(bboxes[i]),
+        )
+        for i, category_id in enumerate(category_ids)]
