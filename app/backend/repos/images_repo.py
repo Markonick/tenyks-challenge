@@ -141,40 +141,48 @@ class ImagesRepository(BaseRepository):
                     image_id,
                     category_id,
                     json.dumps(bboxes[i]),
-            )
-            for i, category_id in enumerate(category_ids)]
+                )
+                for i, category_id in enumerate(category_ids)
+            ]
 
-    async def create_model_image(self, dataset_type: str, dataset_name: str, dataset_path: str, dataset_size: int, ) -> None:
+    async def create_model_image(
+        self,
+        model_annotations: Optional[Annotations] = None,
+        model_categories: Optional[List[Category]] = None,
+        model_heatmap: Optional[str] = None,
+        model_activations: Optional[str] = None,
+    ) -> None:
         """Create image model based features"""
 
-      
-        bboxes = [bbox for bbox in model_annotations.bboxes]
-        categories = [cat for cat in model_annotations.categories]
+        if model_annotations:
+            bboxes = [bbox for bbox in model_annotations.bboxes]
+            categories = [cat for cat in model_annotations.categories]
 
-        category_insert_query_string = f"""
-            INSERT INTO tenyks.model_image_category(category)
-            VALUES ($1)
-            RETURNING id;
-        """
-        category_ids = [ 
-            await self.connection.fetchval(
-                category_insert_query_string,
-                category
-            )
-            for category in categories
-        ]
+            category_insert_query_string = f"""
+                INSERT INTO tenyks.model_image_category(category)
+                VALUES ($1)
+                RETURNING id;
+            """
+            category_ids = [ 
+                await self.connection.fetchval(
+                    category_insert_query_string,
+                    category
+                )
+                for category in categories
+            ]
 
-        image_bbox_insert_query_string = f"""
-            INSERT INTO tenyks.model_image_bbox(image_id, category_id, bbox_json)
-            VALUES ($1, $2, $3)
-            RETURNING id;
-        """
-        
-        result = [
-            await self.connection.fetchval(
-                image_bbox_insert_query_string,
-                image_id,
-                category_id,
-                json.dumps(bboxes[i]),
-        )
-        for i, category_id in enumerate(category_ids)]
+            image_bbox_insert_query_string = f"""
+                INSERT INTO tenyks.model_image_bbox(image_id, category_id, bbox_json)
+                VALUES ($1, $2, $3)
+                RETURNING id;
+            """
+            
+            result = [
+                await self.connection.fetchval(
+                    image_bbox_insert_query_string,
+                    image_id,
+                    category_id,
+                    json.dumps(bboxes[i]),
+                )
+                for i, category_id in enumerate(category_ids)
+            ]
