@@ -68,7 +68,7 @@ class TenyksSDK():
         self._backend_base_url = os.environ.get("BACKEND_BASE_URL")
         self.extract_base_url = os.environ.get("EXTRACT_BASE_URL")
         
-    async def _s3_file_count(self, files_path: str, file_type: str) -> str:
+    async def _s3_get_file_count(self, files_path: str, file_type: str) -> str:
         totalCount = 0
       
         bucket = os.environ.get("AWS_BUCKET")
@@ -80,14 +80,22 @@ class TenyksSDK():
                     totalCount += 1
             
         return totalCount
-            
-    async def _s3_reader(self, files_path: str, file_type: str) -> str:
+           
+    async def _s3_get_file_type(self, files_path: str) -> str:
         bucket = os.environ.get("AWS_BUCKET")
         session = aioboto3.Session()
         async with session.resource("s3", **dataclasses.asdict(self._awsConfig)) as s3:
             bucket = await s3.Bucket(bucket)     
             async for s3_object in bucket.objects.filter(Prefix=files_path):
-                if s3_object.key.split(".")[-1] == file_type:
+                return s3_object.key.split(".")[-1]
+
+    async def _s3_reader(self, files_path: str, file_type_filter: str) -> str:
+        bucket = os.environ.get("AWS_BUCKET")
+        session = aioboto3.Session()
+        async with session.resource("s3", **dataclasses.asdict(self._awsConfig)) as s3:
+            bucket = await s3.Bucket(bucket)     
+            async for s3_object in bucket.objects.filter(Prefix=files_path):
+                if s3_object.key.split(".")[-1] == file_type_filter:
                     yield s3_object.key
 
     async def dataset(self, name: str) -> Model:
@@ -98,16 +106,10 @@ class TenyksSDK():
         return resp
 
     async def save_dataset(self, name: str, dataset_path: str, images_path: str, annotations_path: Optional[str]=None, ):
-        try:
-            async for image in self._s3_reader(files_path=images_path, file_type='jpg'):
-                dataset_type = str(image).split(".")[-1]
-                break
-        except Exception as e:
-            print(e)
-        # Assumption/Trade-off (could be wrong): All image types within a dataset are of a single type eg. jpg
-        # dataset_type = str(images_path).split(".")[-1]
-      
-        size = await self._s3_file_count(files_path=images_path, file_type=dataset_type) 
+
+        dataset_type = await self._s3_get_file_type(files_path=images_path)
+
+        size = await self._s3_get_file_count(files_path=images_path, file_type=dataset_type) 
 
         dataset_request = Dataset(
             name=name,
@@ -142,12 +144,12 @@ class TenyksSDK():
 
     async def save_images(self, images_path: str, annotations_path: str):
         
-        annotations_path_gen = os.scandir(annotations_path)
-        images_path_gen = os.scandir(images_path)
-        image_dataset_size = len(glob.glob(images_path))
-        annotations_dataset_size = len(glob.glob(annotations_path))
+        # annotations_path_gen = os.scandir(annotations_path)
+        # images_path_gen = os.scandir(images_path)
+        # image_dataset_size = len(glob.glob(images_path))
+        # annotations_dataset_size = len(glob.glob(annotations_path))
         try:
-            async for i in self._s3_reader(files_path=images_path, file_type='jpg'):
+            async for i in self._s3_reader(files_path=images_path, file_type_filter='jpg'):
                 continue
         except StopAsyncIteration:
             print('YO!')
