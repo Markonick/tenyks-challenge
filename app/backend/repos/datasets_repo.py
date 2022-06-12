@@ -81,11 +81,7 @@ class DatasetsRepository(BaseRepository):
                 FROM tenyks.dataset_type dst
                 WHERE dst.name=$1;
             """
-            print(dataset_type)
-            print(dataset_type)
-            print(dataset_type)
-            print(dataset_type)
-            print(dataset_type)
+            
             dataset_type_id = await self.connection.fetchval(
                 get_dataset_type_id_string,
                 dataset_type,

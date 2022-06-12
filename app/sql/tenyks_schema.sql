@@ -40,12 +40,6 @@ CREATE TABLE IF NOT EXISTS tenyks.model(
     UNIQUE(name)
 );
 
-INSERT INTO tenyks.model (id, name)
-VALUES
-    (1, 'Hybrid Model'),
-    (2, 'Terminator Model')
-ON CONFLICT (id) DO NOTHING;
-
 CREATE TABLE IF NOT EXISTS tenyks.model_dataset(
     model_id INT NOT NULL,
     dataset_id INT NOT NULL,

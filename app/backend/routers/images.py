@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from typing import List
 
 from shared.types_common import TenyksImagesRequest, TenyksResponse, TenyksSuccess
@@ -14,22 +14,21 @@ router = APIRouter(
 )
 
 
-@router.get(
-    "",
+@router.post(
+    "/all",
     response_model=TenyksResponse,
     status_code=200,
 )
 async def get_all_images(
-    # request: TenyksImagesRequest,
+    request: TenyksImagesRequest,
     images_repo: ImagesRepository = Depends(get_repository(ImagesRepository)),
 ) -> TenyksResponse:
-    """Get a dataset based on a known dataset id."""
+    """Get all images in a dataset based on dataset name."""
+    dtos = await images_repo.get_all_images(dataset_name=request.dataset_name)
 
-    dtos = await images_repo.get_all_images(1)
-    print(json.loads(dtos[0].bboxes[0]))
     images = [
         Image(
-            id=dto.id,
+            # id=dto.id,
             name=dto.name,
             url=dto.images_path,
             dataset_name=dto.dataset_name,

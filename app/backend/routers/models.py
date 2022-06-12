@@ -21,7 +21,7 @@ async def get_all_models(models_repo: ModelsRepository=Depends(get_repository(Mo
     dtos = await models_repo.get_all_models()
     models = [
         Model(
-            id=int(dto.id),
+            # id=int(dto.id),
             name=dto.name,
             datasets=["adasd"]
         )

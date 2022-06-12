@@ -24,7 +24,6 @@ async def get_all_datasets(datasets_repo: DatasetsRepository=Depends(get_reposit
     
     datasets = [
         Dataset(
-            id=int(dto.id),
             name=dto.dataset_name,
             size=dto.dataset_size,
             type=dto.dataset_type_id,

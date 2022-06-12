@@ -2,6 +2,7 @@ from pydantic.dataclasses import dataclass
 from enum import Enum, unique
 from typing import Generic, Type, TypeVar, Union
 from pydantic.generics import GenericModel
+from fastapi import Request
 
 RequestT = TypeVar("RequestT")
 ResponseT = TypeVar("ResponseT")
@@ -45,7 +46,13 @@ class TenyksModelsRequest:
    
 @dataclass 
 class TenyksImagesRequest:
-    dataset_id: int
+    dataset_name: str
+@dataclass 
+
+class TenyksModelImagesRequest:
+    dataset_name: str
+    heatmap_path: str
+    activations_path: str
 
 class TenyksResponse(GenericModel, Generic[ResponseT]):
     response: Union[TenyksSuccess[ResponseT], TenyksError]

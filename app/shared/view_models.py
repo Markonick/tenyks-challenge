@@ -56,13 +56,13 @@ class Activations:
     """Representation of a Layer Activations"""
 
     # array: List[np.ndarray] = field(default_factory=lambda: List[np.zeros(10)])
-    array: List[Any]
+    array: Any
 
 @dataclass
 class Image:
     """Information about each image"""
     
-    id: int
+    # id: int
     name: str
     url: str
     dataset_name: str

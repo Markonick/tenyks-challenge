@@ -10,4 +10,4 @@ Pillow
 requests
 watchgod
 httpx
-aioboto3
+aiobotocore

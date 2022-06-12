@@ -36,5 +36,9 @@ class ImageDto:
     dataset_id: int
     bboxes: List[BoundingBox]
     categories: List[Category]
-    images_pathl: str
+    images_path: str
     dataset_name: str
+    model_bboxes: Optional[List[BoundingBox]] = None
+    model_categories: Optional[List[Category]] = None
+    model_heatmap: Optional[str] = None
+    model_activations: Optional[str] = None

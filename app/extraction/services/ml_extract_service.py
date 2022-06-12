@@ -5,8 +5,9 @@ from asyncpg.connection import Connection
 import pydantic
 import numpy as np
 
+from shared.encoders import NumpyEncoder
 from shared.types_common import ExtractionTypes
-from shared.view_models import Annotations
+from shared.view_models import Activations, Annotations, Heatmap
 from shared.model_data import DummyModel
 
 
@@ -21,22 +22,22 @@ class HeatmapExtraction(ExtractionTypeBase):
     def __init__(self, model_id):
         self._model = DummyModel(model_id)
 
-    def run(self, img_path: str) -> np.ndarray: 
+    def run(self, img_path: str) -> Heatmap: 
         """Get heatmap  for an image based on model id"""
            
         heatmap = self._model.get_img_heatmap(img_path=img_path)
-        return heatmap
+        return Heatmap(array=json.dumps(heatmap, cls=NumpyEncoder))
 
 
 class ActivationsExtraction(ExtractionTypeBase):
     def __init__(self, model_id):
         self._model = DummyModel(model_id)
 
-    def run(self, img_path: str) -> List[np.ndarray]:
+    def run(self, img_path: str) -> Activations:
         """Get activations for an image based on model id"""
  
         activations = self._model.get_img_activations(img_path=img_path)
-        return activations
+        return Activations(array=json.dumps(activations, cls=NumpyEncoder))
 
 
 class PredictionsExtraction(ExtractionTypeBase):

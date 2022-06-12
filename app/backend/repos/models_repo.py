@@ -112,7 +112,7 @@ class ModelsRepository(BaseRepository):
                 ) 
                 for dataset in datasets
             ]
-            print(datasets)
+            
             model_dataset_insert_query_string = f"""
                 INSERT INTO tenyks.model_dataset(model_id, dataset_id)
                 VALUES ($1, $2);

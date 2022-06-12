@@ -1,8 +1,8 @@
 import json
-from typing import List
+from typing import List, Optional
 from asyncpg.connection import Connection
 import pydantic
-from shared.view_models import Annotations
+from shared.view_models import Annotations, Category
 from shared.database import typed_fetch
 from ..dtos import ImageDto
 from shared.database import BaseRepository
@@ -14,7 +14,7 @@ class ImagesRepository(BaseRepository):
     def __init__(self, conn: Connection) -> None:
         super().__init__(conn)
 
-    async def get_all_images(self, dataset_id: int) -> List[ImageDto]:
+    async def get_all_images(self, dataset_name: str) -> List[ImageDto]:
         """Get image based on its id"""
         
         async with self.connection.transaction():
@@ -31,11 +31,11 @@ class ImagesRepository(BaseRepository):
                 JOIN tenyks.dataset d ON im.dataset_id=d.id
                 JOIN tenyks.image_bbox ib ON im.id=ib.image_id
                 JOIN tenyks.image_category ic ON ib.category_id =ic.id 
-                WHERE im.dataset_id=$1
+                WHERE d.dataset_name=$1
                 GROUP by
                     im.id,d.images_path,d.dataset_name, im.name;
             """
-            image = await typed_fetch(self.connection, ImageDto, query_string, dataset_id)
+            image = await typed_fetch(self.connection, ImageDto, query_string, dataset_name)
             return image
             
     async def get_image_by_id(self, image_id: int) -> ImageDto:
@@ -80,11 +80,20 @@ class ImagesRepository(BaseRepository):
             image = await typed_fetch(self.connection, ImageDto, query_string, image_id, model_id)
             return image
 
-    async def create_image(self, name: str, dataset_name: str, annotations: Annotations) -> ImageDto:
+    async def create_image(
+        self,
+        name: str,
+        dataset_name: str,
+        annotations: Annotations,
+        model_annotations: Optional[Annotations] = None,
+        model_categories: Optional[List[Category]] = None,
+        model_heatmap: Optional[str] = None,
+        model_activations: Optional[str] = None,
+    ) -> ImageDto:
         """Create a new image"""
 
-        bboxes = [bbox.array for bbox in annotations.bboxes]
-        categories = [cat.category_id for cat in annotations.categories]
+        bboxes = [bbox for bbox in annotations.bboxes]
+        categories = [cat for cat in annotations.categories]
         
         async with self.connection.transaction():
             get_dataset_id_string = f"""
