@@ -18,18 +18,16 @@ class ModelsRepository(BaseRepository):
         
         async with self.connection.transaction():
             query_string = f"""
-                SELECT
+               SELECT
                     mo.id,
                     mo.name,
-                    d.dataset_type_id,
-                    d.dataset_name,
-                    d.dataset_size,
-                    d.dataset_path,
-                    d.images_path
+                ARRAY_AGG(d.dataset_name) datasets
                 FROM tenyks.model mo
                 JOIN tenyks.model_dataset md on mo.id = md.model_id
                 JOIN tenyks.dataset d on md.dataset_id = d.id
                 JOIN tenyks.dataset_type dt on d.dataset_type_id = dt.id
+                GROUP by
+                    mo.id;
             """
             result = await typed_fetch(self.connection, ModelDto, query_string)
             return result
@@ -61,8 +59,8 @@ class ModelsRepository(BaseRepository):
 
         async with self.connection.transaction():
             query_string = f"""
-                SELECT
-                    mo.id,
+                SELECT distinct on (mo.id, md.model_id)
+                     mo.id,
                     mo.name,
                     d.dataset_type_id,
                     d.dataset_name,
@@ -70,9 +68,9 @@ class ModelsRepository(BaseRepository):
                     d.dataset_path,
                     d.images_path
                 FROM tenyks.model mo
-                JOIN tenyks.model_dataset md on mo.id = md.model_id
-                JOIN tenyks.dataset d on md.dataset_id = d.id
-                JOIN tenyks.dataset_type dt on d.dataset_type_id = dt.id
+                INNER JOIN tenyks.model_dataset md on mo.id = md.model_id
+                INNER JOIN tenyks.dataset d on md.dataset_id = d.id
+                INNER JOIN tenyks.dataset_type dt on d.dataset_type_id = dt.id
                 WHERE id=$1;
             """
             dataset = await typed_fetch(self.connection, ModelDto, query_string, modelid)
@@ -93,12 +91,6 @@ class ModelsRepository(BaseRepository):
                 name,
             )
             
-            print(model_id)
-            print(model_id)
-            print(model_id)
-            print(model_id)
-            print(model_id)
-            print(model_id)
             get_dataset_id_query_string = f"""
                 SELECT 
                     ds.id 

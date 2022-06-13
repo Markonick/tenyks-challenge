@@ -15,7 +15,6 @@ class DatasetsRepository(BaseRepository):
 
     async def get_all_datasets(self, ) -> List[DatasetDto]:
         """Get all datasets -- TODO: based on image_type??"""
-        
         async with self.connection.transaction():
             query_string = f"""
                 SELECT
@@ -29,6 +28,7 @@ class DatasetsRepository(BaseRepository):
             """
 
             result = await typed_fetch(self.connection, DatasetDto, query_string)
+            print(result)
             
             return result
 
@@ -43,8 +43,11 @@ class DatasetsRepository(BaseRepository):
                     ds.dataset_name,
                     ds.dataset_size,
                     ds.dataset_path,
-                    ds.images_path
+                    ds.images_path,
+                    m.id
                 FROM tenyks.dataset ds
+                JOIN tenyks.model_dataset mds on ds.id = mds.dataset_id
+                JOIN tenyks.model m on mds.model_id = m.id
                 WHERE dataset_name=$1;
             """
 

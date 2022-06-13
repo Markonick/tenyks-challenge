@@ -51,6 +51,9 @@ class PredictionsExtraction(ExtractionTypeBase):
         return bbox_and_categories
 
 def dispatch_extractor_service(model_id: int, extraction_type: ExtractionTypes, img_path: str):
+    """
+    Add more ml feature extractions here if required, add the new implementation class above
+    """
     return {
         ExtractionTypes.HEATMAP: lambda: HeatmapExtraction(model_id=model_id).run(img_path),
         ExtractionTypes.ACTIVATIONS: lambda: ActivationsExtraction(model_id=model_id).run(img_path),

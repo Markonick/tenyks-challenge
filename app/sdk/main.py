@@ -9,7 +9,7 @@ import os, json
 from typing import Any, List, Optional
 
 from shared.s3_utils import s3_download_files, s3_get_file_count, s3_get_file_type, AwsConfig
-from shared.types_common import ExtractionTypes, TenyksExtractionRequest
+from shared.types_common import ExtractionTypes, ImageSearchFilter, TenyksExtractionRequest, TenyksResponse
 from shared.request_handlers import get_async_request_handler, post_async_request_handler
 from shared.view_models import (
     Activations, 
@@ -159,8 +159,21 @@ class TenyksSDK():
         return responses
 
     @force_sync
-    async def extract(self, dataset_name: str, model_name: str, extraction_type: ExtractionTypes):
-        request=TenyksExtractionRequest(dataset_name=dataset_name, model_name=model_name, type=extraction_type)
+    async def extract(
+        self,
+        dataset_name: str,
+        model_name: str,
+        extraction_type: ExtractionTypes,
+        image_search_filter: Optional[ImageSearchFilter] = ImageSearchFilter.ALL,
+        image_name: Optional[str] = None,
+    ) -> TenyksResponse:
+        request=TenyksExtractionRequest(
+            dataset_name=dataset_name,
+            model_name=model_name,
+            image_name=image_name, 
+            type=extraction_type,
+            image_search_filter=image_search_filter
+        )
         resp = await post_async_request_handler(url=f"{self._extract_base_url}/extract", request=request)
         print(resp)
         return resp
@@ -198,6 +211,15 @@ if __name__ == "__main__":
     #     images_path=terminator_images_path,
     # )
 
+    # # Save dataset 3
+    # dataset_name = "terminator_dataset2"
+    # terminator_dataset_base_path = "terminator_dataset"
+    # terminator_images_path = f"{terminator_dataset_base_path}/images"
+    # result = tc.save_dataset(
+    #     name=dataset_name,
+    #     dataset_path=terminator_dataset_base_path,
+    #     images_path=terminator_images_path,
+    # )
 
     # # Save model
     # model_name = "Hybrid Model"
@@ -257,16 +279,16 @@ if __name__ == "__main__":
     #     annotations_path=terminator_dataset_annotations_path
     # )
 
-    # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
-    ############################################################################################
+    ####### Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
+    #################################################################################################
 
-    model_name = "Terminator Model"
-    dataset_name = "terminator_dataset"
-    result = tc.extract(
-        dataset_name=dataset_name,
-        model_name=model_name,
-        extraction_type=ExtractionTypes.HEATMAP
-    )
+    # model_name = "Terminator Model"
+    # dataset_name = "terminator_dataset"
+    # result = tc.extract(
+    #     dataset_name=dataset_name,
+    #     model_name=model_name,
+    #     extraction_type=ExtractionTypes.HEATMAP
+    # )
 
     # model_name = "Hybrid Model"
     # dataset_name = "terminator_dataset"
@@ -279,17 +301,22 @@ if __name__ == "__main__":
 
     # model_name = "Terminator Model"
     # dataset_name = "terminator_dataset"
+    # image_search_filter = ImageSearchFilter.ALL
     # result = tc.extract(
     #     dataset_name=dataset_name,
     #     model_name=model_name,
+    #     image_search_filter=image_search_filter,
     #     extraction_type=ExtractionTypes.PREDICTIONS
     # )
 
     model_name = "Terminator Model"
     dataset_name = "terminator_dataset"
+    image_name = "1.jpg"
     result = tc.extract(
         dataset_name=dataset_name,
         model_name=model_name,
+        image_search_filter = ImageSearchFilter.SINGLE,
+        image_name=image_name,
         extraction_type=ExtractionTypes.ACTIVATIONS
     )
 

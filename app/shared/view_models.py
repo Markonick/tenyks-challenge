@@ -1,29 +1,28 @@
 from typing import Any, List, Optional
-from pydantic import BaseModel, Field
+from enum import Enum, unique
 from pydantic.dataclasses import dataclass
-from dataclasses import dataclass as non_pydantic_dataclass
-from dataclasses import field
 import numpy as np
 
 
+    
 @dataclass
 class Dataset:
     """Information about each dataset as a whole"""
     
-    # id: int
     name: str
     size: int
     type: str
     dataset_path: str
     images_path: str
+    id: Optional[int] = None
 
 @dataclass
 class Model:
     """Information about each model as a whole"""
 
-    # id: int
     name: str
     datasets: List[str]
+    id: Optional[int] = None
     
 @dataclass
 class BoundingBox:
@@ -62,11 +61,11 @@ class Activations:
 class Image:
     """Information about each image"""
     
-    # id: int
     name: str
     url: str
     dataset_name: str
     annotations: Annotations
+    id: Optional[int] = None
     model_annotations: Optional[Annotations] = None
     model_activations: Optional[Activations] = None
     model_heatmap: Optional[Heatmap] = None

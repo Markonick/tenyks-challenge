@@ -21,11 +21,7 @@ class ModelDto:
 
     id: int
     name: str
-    dataset_type_id: int            
-    dataset_name: str
-    dataset_size: int
-    dataset_path: str
-    images_path: str
+    datasets: List[str]
     
 @dataclass
 class ImageDto:

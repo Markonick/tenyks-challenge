@@ -24,6 +24,7 @@ async def get_all_datasets(datasets_repo: DatasetsRepository=Depends(get_reposit
     
     datasets = [
         Dataset(
+            id=dto.id,
             name=dto.dataset_name,
             size=dto.dataset_size,
             type=dto.dataset_type_id,
@@ -41,7 +42,7 @@ async def get_dataset_by_id(dataset_id: int, datasets_repo: DatasetsRepository=D
 
     dto = await datasets_repo.get_dataset_by_id(int(dataset_id))
     dataset = Dataset(
-        id=int(dto.id),
+        id=dto.id,
         name=dto.dataset_name,
         size=dto.dataset_size,
         type=dto.dataset_type_id,
@@ -60,12 +61,12 @@ async def get_dataset_by_name(name: str, datasets_repo: DatasetsRepository=Depen
             return TenyksResponse(
                 response=TenyksError(
                     type=StatusGroup.CLIENT_ERROR,
-                    message=[]
+                    message="client request error for dataset {name}"
                 )
             )
         else:
             dataset = Dataset(
-                id=int(dto.id),
+                id=dto.id,
                 name=dto.dataset_name,
                 size=dto.dataset_size,
                 type=dto.dataset_type_id,

@@ -1,12 +1,19 @@
 from pydantic.dataclasses import dataclass
 from enum import Enum, unique
-from typing import Generic, Type, TypeVar, Union
+from typing import Generic, Optional, Type, TypeVar, Union
 from pydantic.generics import GenericModel
 from fastapi import Request
+
+from shared.view_models import Annotations
 
 RequestT = TypeVar("RequestT")
 ResponseT = TypeVar("ResponseT")
 
+
+@unique
+class ImageSearchFilter(str, Enum):
+    ALL = "all"
+    SINGLE = "single"
 
 @unique
 class StatusGroup(str, Enum):
@@ -35,6 +42,8 @@ class TenyksExtractionRequest:
     dataset_name: str
     model_name: str
     type: ExtractionTypes
+    image_search_filter: Optional[ImageSearchFilter] = ImageSearchFilter.ALL 
+    image_name: Optional[str] = None
     
 @dataclass
 class TenyksDatasetsRequest:
@@ -47,12 +56,17 @@ class TenyksModelsRequest:
 @dataclass 
 class TenyksImagesRequest:
     dataset_name: str
-@dataclass 
+    image_name: Optional[str] = None
 
+@dataclass 
 class TenyksModelImagesRequest:
+    image_id: int
+    model_name: str
     dataset_name: str
-    heatmap_path: str
-    activations_path: str
+    extraction_type: ExtractionTypes
+    result_path: Optional[str] = None
+    model_annotations: Optional[Annotations] = None
+
 
 class TenyksResponse(GenericModel, Generic[ResponseT]):
     response: Union[TenyksSuccess[ResponseT], TenyksError]
