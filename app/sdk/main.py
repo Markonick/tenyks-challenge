@@ -84,7 +84,7 @@ class TenyksSDK():
 
         dataset_type = await s3_get_file_type(aws_config=self._awsConfig, files_path=images_path)
 
-        size = await s3_get_file_count(files_path=images_path, file_type_filter=dataset_type) 
+        size = await s3_get_file_count(aws_config=self._awsConfig, files_path=images_path, file_type_filter=dataset_type) 
         dataset_request = Dataset(
             name=name,
             size=size,
@@ -260,13 +260,13 @@ if __name__ == "__main__":
     # Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
     ############################################################################################
 
-    # model_name = "Terminator Model"
-    # dataset_name = "terminator_dataset"
-    # result = tc.extract(
-    #     dataset_name=dataset_name,
-    #     model_name=model_name,
-    #     extraction_type=ExtractionTypes.HEATMAP
-    # )
+    model_name = "Terminator Model"
+    dataset_name = "terminator_dataset"
+    result = tc.extract(
+        dataset_name=dataset_name,
+        model_name=model_name,
+        extraction_type=ExtractionTypes.HEATMAP
+    )
 
     # model_name = "Hybrid Model"
     # dataset_name = "terminator_dataset"
