@@ -15,7 +15,7 @@ services:
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}
       PSQL_PASSWORD: ${PSQL_PASSWORD}
       PSQL_DATABASE: ${PSQL_DATABASE}
-      PSQL_SCHEMA: ${PSQL_SCHEMA}
+      # PSQL_SCHEMA: ${PSQL_SCHEMA}
       BACKEND_BASE_URL: ${BACKEND_BASE_URL}
       EXTRACT_BASE_URL: ${EXTRACT_BASE_URL}
       DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
@@ -45,7 +45,7 @@ services:
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}
       PSQL_PASSWORD: ${PSQL_PASSWORD}
       PSQL_DATABASE: ${PSQL_DATABASE}
-      PSQL_SCHEMA: ${PSQL_SCHEMA}
+      # PSQL_SCHEMA: ${PSQL_SCHEMA}
       DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
     ports:
      - "8000:8000"
@@ -67,7 +67,7 @@ services:
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}
       PSQL_PASSWORD: ${PSQL_PASSWORD}
       PSQL_DATABASE: ${PSQL_DATABASE}
-      PSQL_SCHEMA: ${PSQL_SCHEMA}
+      # PSQL_SCHEMA: ${PSQL_SCHEMA}
       DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
       BACKEND_BASE_URL: ${BACKEND_BASE_URL}
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
@@ -95,14 +95,11 @@ services:
       start_period: 20s
     ports:
       - "5432:5432"
-    volumes:
-      - ./app/sql/tenyks_schema.sql:/docker-entrypoint-initdb.d/tenyks_schema.sql
     environment:
       POSTGRES_USER: ${PSQL_USERNAME}
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}
       POSTGRES_PASSWORD: ${PSQL_PASSWORD}
       PSQL_DATABASE: ${PSQL_DATABASE}
-      SCHEMA: ${PSQL_SCHEMA}
 
   minio:
     container_name: minio

@@ -27,10 +27,10 @@ class ImagesRepository(BaseRepository):
                     ARRAY_AGG(category) categories,
                     d.images_path,
                     d.dataset_name
-                FROM tenyks.image im
-                JOIN tenyks.dataset d ON im.dataset_id=d.id
-                JOIN tenyks.image_bbox ib ON im.id=ib.image_id
-                JOIN tenyks.image_category ic ON ib.category_id =ic.id 
+                FROM image im
+                JOIN dataset d ON im.dataset_id=d.id
+                JOIN image_bbox ib ON im.id=ib.image_id
+                JOIN image_category ic ON ib.category_id =ic.id 
                 WHERE d.dataset_name=$1
                 GROUP by
                     im.id,d.images_path,d.dataset_name, im.name;
@@ -48,9 +48,9 @@ class ImagesRepository(BaseRepository):
                     im.dataset_id,
                     ib.bbox_json,
                     ic.category
-                FROM tenyks.image im
-                JOIN tenyks.image_bbox ib on im.id=ib.image_id
-                JOIN tenyks.image_category ic on ib.category_id=ic.id
+                FROM image im
+                JOIN image_bbox ib on im.id=ib.image_id
+                JOIN image_category ic on ib.category_id=ic.id
                 WHERE image_id=$1;
             """
             image = await typed_fetch(self.connection, ImageDto, query_string, image_id)
@@ -69,10 +69,10 @@ class ImagesRepository(BaseRepository):
                     ARRAY_AGG(category) categories,
                     d.images_path,
                     d.dataset_name
-                FROM tenyks.image im
-                JOIN tenyks.dataset d ON im.dataset_id=d.id
-                JOIN tenyks.image_bbox ib ON im.id=ib.image_id
-                JOIN tenyks.image_category ic ON ib.category_id =ic.id 
+                FROM image im
+                JOIN dataset d ON im.dataset_id=d.id
+                JOIN image_bbox ib ON im.id=ib.image_id
+                JOIN image_category ic ON ib.category_id =ic.id 
                 WHERE im.name=$1
                 GROUP by
                     im.id,d.images_path,d.dataset_name, im.name;
@@ -91,13 +91,13 @@ class ImagesRepository(BaseRepository):
                     im.image_path,
                     ib.bbox_json,
                     ic.category_json
-                FROM tenyks.image im
-                JOIN tenyks.image_bbox ib on im.id=ib.image_id
-                JOIN tenyks.image_category ic on ib.id=ic.bbox_id
-                JOIN tenyks.model_image_bbox mib on im.id=mib.image_id
-                JOIN tenyks.model_image_category mic on mib.id=mic.bbox_id
-                JOIN tenyks.model m on mib.model_id = m.id
-                --JOIN tenyks.model_image_heatmap mih on 
+                FROM image im
+                JOIN image_bbox ib on im.id=ib.image_id
+                JOIN image_category ic on ib.id=ic.bbox_id
+                JOIN model_image_bbox mib on im.id=mib.image_id
+                JOIN model_image_category mic on mib.id=mic.bbox_id
+                JOIN model m on mib.model_id = m.id
+                --JOIN model_image_heatmap mih on 
                 WHERE image_id=$1 AND model_id=$2;
             """
             image = await typed_fetch(self.connection, ImageDto, query_string, image_id, model_id)
@@ -118,7 +118,7 @@ class ImagesRepository(BaseRepository):
             get_dataset_id_string = f"""
                 SELECT 
                     ds.id 
-                FROM tenyks.dataset ds
+                FROM dataset ds
                 WHERE dataset_name=$1;
             """
             
@@ -128,7 +128,7 @@ class ImagesRepository(BaseRepository):
             )
 
             image_insert_query_string = f"""
-                INSERT INTO tenyks.image(dataset_id, name)
+                INSERT INTO image(dataset_id, name)
                 VALUES ($1, $2)
                 RETURNING id;
             """
@@ -140,7 +140,7 @@ class ImagesRepository(BaseRepository):
             )
 
             category_insert_query_string = f"""
-                INSERT INTO tenyks.image_category(category)
+                INSERT INTO image_category(category)
                 VALUES ($1)
                 RETURNING id;
             """
@@ -153,7 +153,7 @@ class ImagesRepository(BaseRepository):
             ]
 
             image_bbox_insert_query_string = f"""
-                INSERT INTO tenyks.image_bbox(image_id, category_id, bbox_json)
+                INSERT INTO image_bbox(image_id, category_id, bbox_json)
                 VALUES ($1, $2, $3)
                 RETURNING id;
             """
@@ -179,7 +179,7 @@ class ImagesRepository(BaseRepository):
         # First need model id
         model_get_query_string = f"""
             SELECT m.id
-            FROM tenyks.model m
+            FROM model m
             WHERE m.name = $1;
         """
 
@@ -191,7 +191,7 @@ class ImagesRepository(BaseRepository):
         categories = [cat for cat in model_annotations.categories]
 
         category_insert_query_string = f"""
-            INSERT INTO tenyks.model_image_category(category)
+            INSERT INTO model_image_category(category)
             VALUES ($1)
             RETURNING id;
         """
@@ -205,7 +205,7 @@ class ImagesRepository(BaseRepository):
         ]
         
         image_bbox_insert_query_string = f"""
-            INSERT INTO tenyks.model_image_bbox(image_id, model_id, category_id, bbox_json)
+            INSERT INTO model_image_bbox(image_id, model_id, category_id, bbox_json)
             VALUES ($1, $2, $3, $4)
             RETURNING id;
         """
@@ -232,7 +232,7 @@ class ImagesRepository(BaseRepository):
         # First need model id
         model_get_query_string = f"""
             SELECT m.id
-            FROM tenyks.model m
+            FROM model m
             WHERE m.name = $1;
         """
 
@@ -242,7 +242,7 @@ class ImagesRepository(BaseRepository):
         )
 
         image_bbox_insert_query_string = f"""
-            INSERT INTO tenyks.model_image_heatmap(image_id, model_id, result_path)
+            INSERT INTO model_image_heatmap(image_id, model_id, result_path)
             VALUES ($1, $2, $3)
             RETURNING (image_id, model_id);
         """
@@ -265,7 +265,7 @@ class ImagesRepository(BaseRepository):
         # First need model id
         model_get_query_string = f"""
             SELECT m.id
-            FROM tenyks.model m
+            FROM model m
             WHERE m.name = $1;
         """
 
@@ -275,7 +275,7 @@ class ImagesRepository(BaseRepository):
         )
 
         image_bbox_insert_query_string = f"""
-            INSERT INTO tenyks.model_image_activations(image_id, model_id, result_path)
+            INSERT INTO model_image_activations(image_id, model_id, result_path)
             VALUES ($1, $2, $3)
             RETURNING (image_id, model_id);
         """

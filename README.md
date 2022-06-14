@@ -8,7 +8,7 @@ We are delighted to enlist your help in building the intelligence that powers th
 
 ## Overview
 
-The Tenyks Platform is designed to ingest a set of datasets, together with artefacts of Deep Learning (DL) models trained on those datasets, and generate _insights_ about the behaviour of these models on the corresponding datasets (more info can be found [here](https://www.tenyks.ai/)).
+The Tenyks Platform is designed to ingest a set of datasets, together with artefacts of Deep Learning (DL) models trained on those datasets, and generate _insights_ about the behaviour of these models on the corresponding datasets (more info can be found [here](https://www.ai/)).
 
 In practice, data and models come in a wide variety of types and representations, which are not necessarily optimised for our processing. Consequently, extracting the metadata necessary for the platform to run requires us to first parse user-provided datasets and models in a _suitable internal representation_.
 
@@ -220,4 +220,4 @@ Please zip your deliverable, upload it to cloud (GDrive, Dropbox, [WeTransfer](h
 ### Contact
 
 If you have any questions or face major hurdles, please reach out. Importantly, we expect you to have first thought of a solution independently.
-The emergency distress signal can be sent to dmitry.kazhdan@tenyks.ai  
+The emergency distress signal can be sent to dmitry.kazhdan@ai  

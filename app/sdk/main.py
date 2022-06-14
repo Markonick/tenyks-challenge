@@ -191,16 +191,18 @@ if __name__ == "__main__":
     tc = TenyksSDK()
 
    
-    # # Save dataset 1
-    # dataset_name = "human_dataset"
-    # human_dataset_base_path = "human_dataset"
-    # human_images_path = f"{human_dataset_base_path}/images"
-    # result = tc.save_dataset(
-    #     name=dataset_name,
-    #     dataset_path=human_dataset_base_path,
-    #     images_path=human_images_path,
-    # )
+    # Save dataset 1
+    print("STEP 1.........")
+    dataset_name = "human_dataset"
+    human_dataset_base_path = "human_dataset"
+    human_images_path = f"{human_dataset_base_path}/images"
+    result = tc.save_dataset(
+        name=dataset_name,
+        dataset_path=human_dataset_base_path,
+        images_path=human_images_path,
+    )
 
+    # print("STEP 2.........")
     # # Save dataset 2
     # dataset_name = "terminator_dataset"
     # terminator_dataset_base_path = "terminator_dataset"
@@ -211,6 +213,7 @@ if __name__ == "__main__":
     #     images_path=terminator_images_path,
     # )
 
+    # print("STEP 3.........")
     # # Save dataset 3
     # dataset_name = "terminator_dataset2"
     # terminator_dataset_base_path = "terminator_dataset"
@@ -221,6 +224,7 @@ if __name__ == "__main__":
     #     images_path=terminator_images_path,
     # )
 
+    # print("STEP 4.........")
     # # Save model
     # model_name = "Hybrid Model"
     # dataset1_name = "human_dataset"
@@ -230,6 +234,7 @@ if __name__ == "__main__":
     #     datasets=[dataset1_name, dataset2_name]
     # )
 
+    # print("STEP 5.........")
     # # Save model
     # model_name = "Terminator Model"
     # dataset1_name = "terminator_dataset"
@@ -238,6 +243,7 @@ if __name__ == "__main__":
     #     datasets=[dataset1_name]
     # )
 
+    # print("STEP 6.........")
     # # Save dataset 3
     # dataset_name = "vulcans_dataset"
     # vulcans_dataset_base_path = "vulcans_dataset"
@@ -248,6 +254,7 @@ if __name__ == "__main__":
     #     images_path=vulcans_images_path,
     # )
 
+    # print("STEP 7.........")
     # # Save model
     # model_name = "Humanoid Model 2"
     # dataset1_name = "human_dataset"
@@ -257,6 +264,7 @@ if __name__ == "__main__":
     #     datasets=[dataset1_name, dataset2_name]
     # )
 
+    # print("STEP 8.........")
     # # Save all images in dataset
     # dataset_name = "human_dataset"
     # human_dataset_base_path = "human_dataset"
@@ -268,6 +276,7 @@ if __name__ == "__main__":
     #     annotations_path=human_annotations_path
     # )
     
+    # print("STEP 9.........")
     # # Save all images in dataset
     # dataset_name = "terminator_dataset"
     # terminator_dataset_base_path = "terminator_dataset"
@@ -279,9 +288,10 @@ if __name__ == "__main__":
     #     annotations_path=terminator_dataset_annotations_path
     # )
 
-    ####### Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
-    #################################################################################################
+    # ###### Now run ML-Extraction (ML-EXTRACT Service) - CPU BOUND, use mulitprocessing, many workers 
+    # ################################################################################################
 
+    # print("STEP 10.........")
     # model_name = "Terminator Model"
     # dataset_name = "terminator_dataset"
     # result = tc.extract(
@@ -290,6 +300,7 @@ if __name__ == "__main__":
     #     extraction_type=ExtractionTypes.HEATMAP
     # )
 
+    # print("STEP 11.........")
     # model_name = "Hybrid Model"
     # dataset_name = "terminator_dataset"
     # result = tc.extract(
@@ -298,7 +309,7 @@ if __name__ == "__main__":
     #     extraction_type=ExtractionTypes.HEATMAP
     # )
 
-
+    # print("STEP 12.........")
     # model_name = "Terminator Model"
     # dataset_name = "terminator_dataset"
     # image_search_filter = ImageSearchFilter.ALL
@@ -309,15 +320,16 @@ if __name__ == "__main__":
     #     extraction_type=ExtractionTypes.PREDICTIONS
     # )
 
-    model_name = "Terminator Model"
-    dataset_name = "terminator_dataset"
-    image_name = "1.jpg"
-    result = tc.extract(
-        dataset_name=dataset_name,
-        model_name=model_name,
-        image_search_filter = ImageSearchFilter.SINGLE,
-        image_name=image_name,
-        extraction_type=ExtractionTypes.ACTIVATIONS
-    )
+    # print("STEP 13.........")
+    # model_name = "Terminator Model"
+    # dataset_name = "terminator_dataset"
+    # image_name = "1.jpg"
+    # result = tc.extract(
+    #     dataset_name=dataset_name,
+    #     model_name=model_name,
+    #     image_search_filter = ImageSearchFilter.SINGLE,
+    #     image_name=image_name,
+    #     extraction_type=ExtractionTypes.ACTIVATIONS
+    # )
 
   

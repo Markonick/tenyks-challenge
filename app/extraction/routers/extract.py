@@ -61,27 +61,28 @@ async def post_dataset(request: TenyksExtractionRequest) -> TenyksResponse:
         if image_search_filter == ImageSearchFilter.ALL:
             url = f"{images_endpoint}/{image_search_filter}"
             images_response = await post_async_request_handler(url=url, request=images_request)
+            list_of_image_dicts = json.loads(images_response.text)["response"]["result"]
         elif image_search_filter == ImageSearchFilter.SINGLE:
             images_response = await get_async_request_handler(url=images_endpoint, request=images_request)
+            list_of_image_dicts = [json.loads(images_response.text)["response"]["result"]]
         else:
             raise "Unknown search filter {image_search_filter}"
     except Exception as e:
         print(e)
         images_response = []
     
-    list_of_image_dicts = json.loads(images_response.text)["response"]["result"]
     print(list_of_image_dicts)
-    print(type(list_of_image_dicts["annotations"]["bboxes"]))
-    print(type(list_of_image_dicts["annotations"]["bboxes"][0]))
+    print(type(list_of_image_dicts))
     images = [
         Image(
+            id=image_dict["id"],
             name=image_dict["name"],
             url=image_dict["url"],
             dataset_name=image_dict["dataset_name"],
             annotations=image_dict["annotations"],
 
         ) 
-        for image_dict in  list_of_image_dicts
+        for image_dict in list_of_image_dicts 
     ]
 
     img_path = f"{images[0].url}/{images[0].name}"
@@ -101,9 +102,14 @@ async def post_dataset(request: TenyksExtractionRequest) -> TenyksResponse:
                 img_path=result.content
             )
             
+            #TODO!!!!! UPLOAD ML RESULTS TO S3 !!!!!
         except Exception as e:
             print(e)      
             result = io.BytesIO()
+        print(image)
+        print(image)
+        print(image)
+        print(image)
 
         # Now update model output related image DB tables
         model_images_request = TenyksModelImagesRequest(

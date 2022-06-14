@@ -22,10 +22,10 @@ class ModelsRepository(BaseRepository):
                     mo.id,
                     mo.name,
                 ARRAY_AGG(d.dataset_name) datasets
-                FROM tenyks.model mo
-                JOIN tenyks.model_dataset md on mo.id = md.model_id
-                JOIN tenyks.dataset d on md.dataset_id = d.id
-                JOIN tenyks.dataset_type dt on d.dataset_type_id = dt.id
+                FROM model mo
+                JOIN model_dataset md on mo.id = md.model_id
+                JOIN dataset d on md.dataset_id = d.id
+                JOIN dataset_type dt on d.dataset_type_id = dt.id
                 GROUP by
                     mo.id;
             """
@@ -45,10 +45,10 @@ class ModelsRepository(BaseRepository):
                     d.dataset_size,
                     d.dataset_path,
                     d.images_path
-                FROM tenyks.model mo
-                JOIN tenyks.model_dataset md on mo.id = md.model_id
-                JOIN tenyks.dataset d on md.dataset_id = d.id
-                JOIN tenyks.dataset_type dt on d.dataset_type_id = dt.id
+                FROM model mo
+                JOIN model_dataset md on mo.id = md.model_id
+                JOIN dataset d on md.dataset_id = d.id
+                JOIN dataset_type dt on d.dataset_type_id = dt.id
                 WHERE name=$1;
             """
             result = await typed_fetch(self.connection, ModelDto, query_string, name)
@@ -67,10 +67,10 @@ class ModelsRepository(BaseRepository):
                     d.dataset_size,
                     d.dataset_path,
                     d.images_path
-                FROM tenyks.model mo
-                INNER JOIN tenyks.model_dataset md on mo.id = md.model_id
-                INNER JOIN tenyks.dataset d on md.dataset_id = d.id
-                INNER JOIN tenyks.dataset_type dt on d.dataset_type_id = dt.id
+                FROM model mo
+                INNER JOIN model_dataset md on mo.id = md.model_id
+                INNER JOIN dataset d on md.dataset_id = d.id
+                INNER JOIN dataset_type dt on d.dataset_type_id = dt.id
                 WHERE id=$1;
             """
             dataset = await typed_fetch(self.connection, ModelDto, query_string, modelid)
@@ -81,7 +81,7 @@ class ModelsRepository(BaseRepository):
       
         async with self.connection.transaction():
             model_insert_query_string = f"""
-                INSERT INTO tenyks.model(name)
+                INSERT INTO model(name)
                 VALUES ($1)
                 RETURNING id;
             """
@@ -94,7 +94,7 @@ class ModelsRepository(BaseRepository):
             get_dataset_id_query_string = f"""
                 SELECT 
                     ds.id 
-                FROM tenyks.dataset ds
+                FROM dataset ds
                 WHERE ds.dataset_name=$1;
             """
             dataset_ids = [
@@ -106,7 +106,7 @@ class ModelsRepository(BaseRepository):
             ]
             
             model_dataset_insert_query_string = f"""
-                INSERT INTO tenyks.model_dataset(model_id, dataset_id)
+                INSERT INTO model_dataset(model_id, dataset_id)
                 VALUES ($1, $2);
             """
             

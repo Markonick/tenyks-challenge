@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+
+  sdk:
+    environment:
+      PSQL_SCHEMA: tenyks
+
+  backend:
+    environment:
+      PSQL_SCHEMA: tenyks
+
+  extraction:
+    environment:
+      PSQL_SCHEMA: tenyks
+
+  postgres:
+    environment:
+      PSQL_SCHEMA: tenyks
+    volumes:
+      - ./app/sql/tenyks_schema.sql:/docker-entrypoint-initdb.d/tenyks_schema.sql

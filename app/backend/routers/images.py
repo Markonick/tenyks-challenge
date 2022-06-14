@@ -72,10 +72,14 @@ async def get_dataset_by_name(
     """Get an image from a dataset based on a known image id."""
     
     image_dto = await images_repo.get_image_by_name(image_name)
-    
+    print(image_dto)
+    print(image_dto)
+    print(image_dto)
+    print(image_dto)
     return TenyksResponse(
         response=TenyksSuccess(
             result=Image(
+                id=image_dto.id,
                 name=image_dto.name,
                 url=image_dto.images_path,
                 dataset_name=image_dto.dataset_name,
