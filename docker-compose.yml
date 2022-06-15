@@ -9,7 +9,7 @@ services:
     volumes:
       - ./app/sdk:/app/sdk
       - ./app/shared:/app/shared
-      - ./dataset_data:/app/sdk/dataset_data
+      # - ./dataset_data:/app/sdk/dataset_data
     environment:
       PSQL_USERNAME: ${PSQL_USERNAME}
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}
@@ -19,8 +19,9 @@ services:
       BACKEND_BASE_URL: ${BACKEND_BASE_URL}
       EXTRACT_BASE_URL: ${EXTRACT_BASE_URL}
       DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
-      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
-      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      AWS_REGION: ${AWS_REGION}
       AWS_BUCKET: ${AWS_BUCKET}
       AWS_ENDPOINT: ${AWS_ENDPOINT}
 
@@ -61,7 +62,7 @@ services:
     volumes:
       - ./app/extraction:/app/extraction
       - ./app/shared:/app/shared
-      - ./dataset_data:/app/extraction/dataset_data
+      # - ./dataset_data:/app/extraction/dataset_data
     environment:
       PSQL_USERNAME: ${PSQL_USERNAME}
       PSQL_HOSTNAME: ${PSQL_HOSTNAME}
@@ -70,10 +71,11 @@ services:
       # PSQL_SCHEMA: ${PSQL_SCHEMA}
       DOCKER_BUILDKIT: ${DOCKER_BUILDKIT}
       BACKEND_BASE_URL: ${BACKEND_BASE_URL}
-      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
-      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       AWS_BUCKET: ${AWS_BUCKET}
       AWS_ENDPOINT: ${AWS_ENDPOINT}
+      AWS_REGION: ${AWS_REGION}
     ports:
      - "8002:8000"
     depends_on:

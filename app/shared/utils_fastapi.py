@@ -1,5 +1,5 @@
 import asyncpg, os, logging
-from typing import List, Union, Callable
+from typing import List, Optional, Union, Callable
 from pickle import DICT
 from fastapi import FastAPI, status, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -49,7 +49,7 @@ async def close_db_connection(app: FastAPI) -> None:
 
     # logger.info("Connection closed")
 
-def create_app(routers: List):
+def create_app(routers: Optional[List] = None):
 
     app = FastAPI()
 
@@ -76,8 +76,8 @@ def create_app(routers: List):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={"message": f"Request cannot be procesed. Please check your client call...{exc}"},
         )
-
-    [app.include_router(router) for router in routers]
+    if routers:
+        [app.include_router(router) for router in routers ]
 
     app.add_event_handler("startup", create_start_app_handler(app))
     app.add_event_handler("shutdown", create_stop_app_handler(app))

@@ -23,11 +23,16 @@ class DownloadedFile:
 async def s3_get_file_type(files_path: str, aws_config: AwsConfig) -> str:
     bucket = os.environ.get("AWS_BUCKET")
     session = get_session()
+    print(files_path)
+    print(aws_config)
     async with session.create_client("s3", **dataclasses.asdict(aws_config)) as s3:
         paginator = s3.get_paginator("list_objects")
         async for page in paginator.paginate(Bucket=bucket, Prefix=files_path):
-            return page.get("Contents", [])[0]["Key"].split(".")[-1]
-
+            try:
+                return page.get("Contents", [])[0]["Key"].split(".")[-1]
+            except Exception as e:
+                return str(e)
+                
 async def s3_get_file_count(files_path: str, file_type_filter: str, aws_config: AwsConfig) -> str:
     totalCount = 0
   

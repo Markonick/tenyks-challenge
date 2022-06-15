@@ -2,12 +2,14 @@ import asyncio
 import dataclasses
 import functools
 from re import S
-from aiobotocore.session import get_session
 from dataclasses import dataclass
 import glob
 import os, json
 from typing import Any, List, Optional
 
+from fastapi import FastAPI
+
+from shared.utils_fastapi import create_app
 from shared.s3_utils import s3_download_files, s3_get_file_count, s3_get_file_type, AwsConfig
 from shared.types_common import ExtractionTypes, ImageSearchFilter, TenyksExtractionRequest, TenyksResponse
 from shared.request_handlers import get_async_request_handler, post_async_request_handler
@@ -71,6 +73,7 @@ class TenyksSDK():
         
         self._backend_base_url = os.environ.get("BACKEND_BASE_URL")
         self._extract_base_url = os.environ.get("EXTRACT_BASE_URL")
+        self._app = create_app()
 
     async def dataset(self, name: str) -> Model:
 
